@@ -1,9 +1,10 @@
-import express from 'express';
-import { runContract } from './genContract.js'; // Importar el script de generación
-
+const express = require('express');
+const runContract = require('./genContract.js')
 
 const app = express();
 app.use(express.json());
+
+
 
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
