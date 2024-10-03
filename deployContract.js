@@ -69,7 +69,8 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
                     contractId: deployTx.id,
                     state: contract.dataPayments,
                     addressOwner: realAddOwner,
-                    addressGN: realAddGN
+                    addressGN: realAddGN,
+                    paymentQuarks: contract.amountGN
                 };
 
                 console.log(JSON.stringify(result));
