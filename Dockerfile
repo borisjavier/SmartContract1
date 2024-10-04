@@ -1,6 +1,9 @@
 # Usa Node.js como base (versión 20)
 FROM node:20
 
+# Actualiza npm
+RUN npm install -g npm@10.9.0
+
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
 
@@ -21,6 +24,8 @@ COPY ./payContract/package*.json ./
 
 # Instalar dependencias de payContract
 RUN npm install
+
+RUN npm i scrypt-cli@0.2.1
 
 # Volver al directorio raíz
 WORKDIR /usr/src/app
