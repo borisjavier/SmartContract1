@@ -12,10 +12,16 @@ app.post('/gen-contract', async (req, res) => {
 
   try {
     // Llamamos a la función compileContract y obtenemos el nombre del archivo generado
-    const contractFileName = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);  
-    
-    // Devolver el nombre del archivo al cliente en formato JSON
-    res.status(200).json({ message: `Contrato generado`, contractFileName });
+    const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);  
+
+    res.status(200).json({
+      message: 'Contrato generado exitosamente',
+      contractId: result.contractId,
+      state: result.state,
+      addressOwner: result.addressOwner,
+      addressGN: result.addressGN,
+      paymentQuarks: result.paymentQuarks
+  });
 
   } catch (error) {
     // Manejo de errores, devolvemos el error como JSON

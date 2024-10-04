@@ -109,6 +109,17 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
                 throw new Error('Fallo en el despliegue');
             }
             console.log(`Despliegue exitoso: ${stdout}`);
+            const deployTx = JSON.parse(stdout);  // Asegúrate de que 'stdout' contiene datos JSON válidos.
+            const result = {
+                contractId: deployTx.contractId,  // Asegúrate que este campo existe en deployTx
+                state: deployTx.state,
+                addressOwner: deployTx.addressOwner,
+                addressGN: deployTx.addressGN,
+                paymentQuarks: deployTx.paymentQuarks
+            };
+
+            console.log(JSON.stringify(result));
+            resolve(result);
         });
         
     } catch (error) {

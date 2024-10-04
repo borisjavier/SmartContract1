@@ -270,8 +270,10 @@ async function createCompileAndDeploy(size, qtyTokens, lapse, startDate, ownerPu
 
       // 3. Desplegar el contrato compilado
       console.log('Desplegando el contrato...');
-      await createAndCompileAndDeploy(qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks);
+      const result = await createAndCompileAndDeploy(qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks);
       console.log('Contrato desplegado exitosamente.');
+      return result;
+
   } catch (error) {
       console.error(`Error en el proceso: ${error.message}`);
       throw error;
