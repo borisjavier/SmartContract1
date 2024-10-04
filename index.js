@@ -14,14 +14,20 @@ app.post('/gen-contract', async (req, res) => {
     // Llamamos a la función compileContract y obtenemos el nombre del archivo generado
     const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);  
 
-    res.status(200).json({
-      message: 'Contrato generado exitosamente',
-      contractId: result.contractId,
-      state: result.state,
-      addressOwner: result.addressOwner,
-      addressGN: result.addressGN,
-      paymentQuarks: result.paymentQuarks
-  });
+    if (result && typeof result === 'object' && result.contractId) {
+      // Enviamos la respuesta de éxito con los detalles del contrato
+      res.status(200).json({
+        message: 'Contrato generado exitosamente',
+        contractId: result.contractId,
+        state: result.state,
+        addressOwner: result.addressOwner,
+        addressGN: result.addressGN,
+        paymentQuarks: result.paymentQuarks
+      });
+    } else {
+      // Si el resultado no es válido, lanzamos un error personalizado
+      throw new Error('La respuesta del contrato es inválida o incompleta');
+    }
 
   } catch (error) {
     // Manejo de errores, devolvemos el error como JSON
