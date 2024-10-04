@@ -22,9 +22,6 @@ COPY ./payContract/package*.json ./
 # Instalar dependencias de payContract
 RUN npm install
 
-# Copia el código fuente de la carpeta payContract
-COPY ./payContract ./
-
 # Volver al directorio raíz
 WORKDIR /usr/src/app
 
