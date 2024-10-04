@@ -25,7 +25,7 @@ COPY ./payContract/package*.json ./
 # Instalar dependencias de payContract
 RUN npm install
 
-RUN npm i scrypt-cli@0.2.1
+RUN npm i scrypt-cli@0.2.1 --save-dev
 
 # Volver al directorio raíz
 WORKDIR /usr/src/app
