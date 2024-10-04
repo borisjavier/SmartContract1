@@ -17,13 +17,13 @@ COPY . .
 WORKDIR /usr/src/app/SmartContracts/payContract
 
 # Copiar package.json y package-lock.json de payContract
-COPY ./SmartContracts/payContract/package*.json ./
+COPY ./payContract/package*.json ./
 
 # Instalar dependencias de payContract
 RUN npm install
 
 # Copia el código fuente de la carpeta payContract
-COPY ./SmartContracts/payContract ./
+COPY ./payContract ./
 
 # Volver al directorio raíz
 WORKDIR /usr/src/app
