@@ -11,13 +11,16 @@ const mutex = new Mutex();
 
 
 const contractDir = path.resolve(__dirname, './payContract'); 
+const cacheDir = path.resolve(__dirname, './cache'); 
+const artifactsDir = path.resolve(contractDir, './artifacts');  // Directorio artifacts
 
-// Ruta al directorio de contratos dentro de `payContracto`
+
+// Ruta al directorio de contratos dentro de `payContract`
 const contractsPath = path.resolve(contractDir, 'src', 'contracts');
 
 async function generateContracts(size) {
-//for (let i = 1; i <= 5; i++) {
-    const contractCode = generateContract(size);  // Supón que `generateContract(i)` genera el código del contrato basado en `i`
+
+    const contractCode = generateContract(size);  
     const contractFileName = `paycontract.ts`;
     const contractPath = path.resolve(contractsPath, contractFileName);
 
@@ -32,15 +35,11 @@ async function generateContracts(size) {
     await fileHandle.close();
     
     console.log(`Archivo de contrato ${contractFileName} sobreescrito correctamente.`);
-    //await cleanUpGeneratedFiles();
-    ///    
-    //await fs.writeFile(contractPath, contractCode);
-    //console.log(`Archivo de contrato ${contractFileName} creado correctamente.`);
+
     } catch (error) {
     console.error(`Error al crear el archivo ${contractFileName}: ${error.message}`);
     throw new Error(`Error al crear el contrato: ${error.message}`);
     }
-//}
 }
 
 async function compileContracts() {
@@ -259,16 +258,115 @@ export class PaymentContract extends SmartContract {
 `;
 }
 
+async function checkCache(size) {
+    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
+    try {
+      // Verifica si los archivos de caché existen
+      const files = await fs.readdir(cachePath);
+      if (files.length === 5) {
+        console.log(`Artifacts encontrados en la caché para size ${size}.`);
+        return true;  // Si los artifacts están presentes, indica que ya están en caché
+      }
+    } catch (error) {
+      // Si hay un error (por ejemplo, carpeta no encontrada), significa que la caché no existe
+      return false;
+    }
+  }
+
+  async function saveArtifacts(size) {
+    const artifacts = ['paycontract.json', 'paycontract.scrypt', 'paycontract.scrypt.map', 'paycontract.transformer.json'];
+    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
+  
+    try {
+      // Crear la carpeta de caché si no existe
+      await fs.mkdir(cachePath, { recursive: true });
+      for (const file of artifacts) {
+        const srcPath = path.resolve(contractDir, `artifacts/${file}`);
+        const destPath = path.resolve(cachePath, file);
+        await fs.copyFile(srcPath, destPath);  // Copiar los archivos generados a la carpeta de caché
+        console.log(`Artifact ${file} guardado en la caché.`);
+      }
+      // Guardar el archivo paycontract.ts desde `contractDir/src/contracts`
+        const contractFile = 'paycontract.ts';
+        const contractSrcPath = path.resolve(contractDir, 'src', 'contracts', contractFile);  // Ruta origen del contrato fuente
+        const contractDestPath = path.resolve(cachePath, contractFile);                       // Ruta destino en la caché
+        await fs.copyFile(contractSrcPath, contractDestPath);  // Copiar el archivo paycontract.ts a la caché
+        console.log(`Archivo ${contractFile} guardado en la caché para size ${size}.`);
+        } catch (error) {
+        console.error(`Error al guardar los artifacts en la caché: ${error.message}`);
+        throw error;
+        }
+  }
+
+async function restoreArtifacts(size) {
+    // Lista de artifacts a restaurar desde la caché
+    const artifacts = [
+      'paycontract.json', 
+      'paycontract.scrypt', 
+      'paycontract.scrypt.map', 
+      'paycontract.transformer.json'
+    ];
+  
+    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
+    const contractDirPath = path.resolve(contractDir, 'src', 'contracts');  // Ruta a la carpeta 'src/contracts'
+    const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
+  
+    try {
+      // 1. Eliminar todo el contenido de 'artifacts' antes de restaurar los archivos
+      await fs.rm(artifactsDirPath, { recursive: true, force: true });
+      console.log(`Directorio ${artifactsDirPath} limpiado.`);
+  
+      // 2. Restaurar los artifacts a la carpeta 'artifacts'
+      for (const file of artifacts) {
+        const srcPath = path.resolve(cachePath, file);      // Ruta de origen en la caché
+        const destPath = path.resolve(artifactsDirPath, file);  // Ruta destino en 'artifacts'
+        await fs.copyFile(srcPath, destPath);               // Copia el archivo desde la caché a 'artifacts'
+        console.log(`Artifact ${file} restaurado desde la caché para size ${size}.`);
+      }
+  
+      // 3. Eliminar todo el contenido de 'src/contracts' antes de copiar el archivo paycontract.ts
+      await fs.rm(contractDirPath, { recursive: true, force: true });
+      console.log(`Directorio ${contractDirPath} limpiado.`);
+  
+      // 4. Restaurar el archivo paycontract.ts a 'src/contracts'
+      const contractFile = 'paycontract.ts';
+      const contractSrcPath = path.resolve(cachePath, contractFile);  // Ruta de origen en la caché
+      const contractDestPath = path.resolve(contractDirPath, contractFile);  // Ruta destino en 'src/contracts'
+  
+      // Crear nuevamente el directorio 'src/contracts' si ha sido eliminado
+      await fs.mkdir(contractDirPath, { recursive: true });
+  
+      await fs.copyFile(contractSrcPath, contractDestPath);  // Copiar el archivo paycontract.ts a 'src/contracts'
+      console.log(`Archivo ${contractFile} restaurado desde la caché para size ${size}.`);
+  
+    } catch (error) {
+      console.error(`Error al restaurar los artifacts desde la caché: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  
+
 async function createCompileAndDeploy(size, qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
   try {
-      // 1. Crear los contratos
-      await generateContracts(size);
+    const isCached = await checkCache(size);
+        if (isCached) {
+        console.log(`Usando artifacts en caché para size ${size}.`);
+            //1 y 2 Si la cache existe, pega los artefactos y el código fuetne
+        await restoreArtifacts(size);  // Restaurar los artifacts a la carpeta `artifacts`
+        } else {
+            // 1. Crear los contratos
+        await generateContracts(size);
 
-      // 2. Compilar los contratos
-      await compileContracts();
-      console.log('Contratos compilados exitosamente.');
+        // 2. Compilar los contratos
+        await compileContracts();
+        console.log('Contratos compilados exitosamente.');
+        // 3. Salvar los artefactos
+        await saveArtifacts(size);
+        }
+      
 
-      // 3. Desplegar el contrato compilado
+      // 4. Desplegar el contrato compilado
       console.log('Desplegando el contrato...');
       const result = await createAndCompileAndDeploy(qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks);
       console.log('Contrato desplegado exitosamente.');
@@ -286,48 +384,25 @@ async function runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks) 
   // Adquiere el mutex
   const release = await mutex.acquire();
   try {
-      await createCompileAndDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks).then(() => {
-        console.log('Proceso completado exitosamente.');
-      }).catch((error) => {
-        console.error('Error en el proceso de creación, compilación o despliegue:', error);
-      });
-  } finally {
-      // Libera el mutex
-      release();
-  }
+    // Llamamos a `createCompileAndDeploy` y esperamos el resultado
+    const result = await createCompileAndDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks);
+
+    // Verificamos que el resultado sea un objeto válido
+    if (result && typeof result === 'object' && result.contractId) {
+        console.log('Proceso completado exitosamente. Contrato desplegado:', JSON.stringify(result, null, 2));
+        return result;  // Retorna el resultado para su posterior uso
+        } else {
+            throw new Error('La respuesta del despliegue no es válida o no contiene un contractId.');
+        }
+    } catch (error) {
+        console.error('Error en el proceso de creación, compilación o despliegue:', error.message);
+        throw error;  // Propagamos el error para ser manejado en niveles superiores
+    } finally {
+        // Liberamos el mutex una vez que el proceso ha terminado, sea exitoso o haya fallado
+        release();
+    }
 }
 
 
 
 module.exports = runContract;
-
-/*
-runContract(5, 5000, 60, 1726598373, 
-  '02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db', 
-  '02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc', 
-  2125)
-Arguments
-5,                 // Tamaño del contrato
-    5000,              // Tokens
-    60,                // Intervalo de tiempo entre transacciones
-    1726598373,        // Fecha de inicio (timestamp)
-    '02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db',  // Clave pública del dueño
-    '02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc',  // Clave pública de la GN del dueño
-    2125              // Quarks
-*/
-
-
-/*sample 
-createCompileAndDeploy(
-  5,                 // Tamaño del contrato
-  5000,              // Tokens
-  60,                // Intervalo de tiempo entre transacciones
-  1726598373,        // Fecha de inicio (timestamp)
-  '02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db',  // Clave pública del dueño
-  '02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc',  // Clave pública de la GN del dueño
-  2125              // Quarks
-).then(() => {
-  console.log('Proceso completado exitosamente.');
-}).catch((error) => {
-  console.error('Error en el proceso de creación, compilación o despliegue:', error);
-});*/

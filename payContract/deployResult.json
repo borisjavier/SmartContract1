@@ -1,0 +1,28 @@
+{
+  "contractId": "5d6bd2657627f77abe89e83d04b900b55c3b61379858710d0bcdf09f50d6834b",
+  "state": [
+    {
+      "timestamp": "1726598373",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1726598433",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1726598493",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1726598553",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1726598613",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    }
+  ],
+  "addressOwner": "1Gm7wfMR4b2HHi9EENaFFLRmsw5UXUQbxb",
+  "addressGN": "1HnhPzq6Zu3DLtRsmtVsvtpExdH77ziw6X",
+  "paymentQuarks": "3000"
+}

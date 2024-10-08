@@ -9,6 +9,7 @@ const contractDir = path.resolve(__dirname, './payContract');
 
 const deployFileName = `deploy.ts`;
 const deployPath = path.resolve(contractDir, deployFileName);
+const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\\/g, '/');
 
 
 async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
@@ -18,6 +19,7 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
             import { adminPublicKey } from './config';
+            import { promises as fs } from 'fs';
 
             import * as dotenv from 'dotenv'
 
@@ -73,27 +75,27 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
                     paymentQuarks: contract.amountGN
                 };
 
-                console.log(JSON.stringify(result));
-                return result;
+                //console.log(result);
+                await fs.writeFile('${resultFilePath}', JSON.stringify(result, null, 2));
             }
 
             async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
                 
                 const fechas: FixedArray<Timestamp, typeof N> = fill(0n, N);
-                console.log('fechas antes de: ', fechas)
+                //console.log('fechas antes de: ', fechas)
 
                 for (let i = 0; i < n; i++) {
                     const fecha = BigInt(fechaInicio + i * l);
-                    console.log('fecha: ', fecha)
+                    //console.log('fecha: ', fecha)
                     fechas[i] = BigInt(fecha);
                 }
 
-                console.log('fechas después de: ', fechas);
+                //console.log('fechas después de: ', fechas);
 
                 return fechas;
             }
 
-            main(${qtyT}, ${lapse}, ${startDate}, '${ownerPubKey}', '${ownerGNKey}', ${quarks}).catch(console.error);
+            main(${qtyT}, ${lapse}, ${startDate}, "${ownerPubKey}", "${ownerGNKey}", ${quarks}).catch(console.error);
 
         `;  //qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks
     
@@ -103,24 +105,22 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
         
         console.log('Archivo deploy.ts actualizado con los nuevos parámetros.');
 
-        exec('npx scrypt-cli deploy', { cwd: contractDir }, (err, stdout, stderr) => {
-            if (err) {
-                console.error(`Error al desplegar el contrato: ${stderr}`);
-                throw new Error('Fallo en el despliegue');
-            }
-            console.log(`Despliegue exitoso: ${stdout}`);
-            const deployTx = JSON.parse(stdout);  // Asegúrate de que 'stdout' contiene datos JSON válidos.
-            const result = {
-                contractId: deployTx.contractId,  // Asegúrate que este campo existe en deployTx
-                state: deployTx.state,
-                addressOwner: deployTx.addressOwner,
-                addressGN: deployTx.addressGN,
-                paymentQuarks: deployTx.paymentQuarks
-            };
-
-            console.log(JSON.stringify(result));
-            resolve(result);
+         
+        await new Promise((resolve, reject) => {
+            exec('npx scrypt-cli deploy', { cwd: contractDir }, (err, stdout, stderr) => {
+                if (err) {
+                    console.error(`Error al desplegar el contrato: ${stderr}`);
+                    return reject(new Error('Fallo en el despliegue'));
+                }
+                console.log(`Despliegue exitoso: ${stdout}`);
+                resolve();  // Resolver la promesa una vez que el despliegue sea exitoso
+            });
         });
+        const resultData = await fs.readFile(resultFilePath, 'utf8');
+        const result = JSON.parse(resultData);
+        console.log('Resultado del contrato desplegado:', result);
+
+        return result;  // Retornar el resultado para su uso posterior
         
     } catch (error) {
         console.error(`Error en el proceso: ${error.message}`);
@@ -130,13 +130,21 @@ async function createAndCompileAndDeploy(qtyT, lapse, startDate, ownerPubKey, ow
 
 module.exports = createAndCompileAndDeploy;
 
-//createAndCompileAndDeploy();
-/*
- 5,                 // Tamaño del contrato
-    5000,              // Tokens
-    60,                // Intervalo de tiempo entre transacciones
-    1726598373,        // Fecha de inicio (timestamp)
-    '02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db',  // Clave pública del dueño
-    '02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc',  // Clave pública de la GN del dueño
-    2125              // Quarks
-    */
+/*(async () => {
+    try {
+        const result = await createAndCompileAndDeploy(
+            5000,              // Tokens
+            60,                // Intervalo de tiempo entre transacciones
+            1726598373,        // Fecha de inicio (timestamp)
+            "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db",  // Clave pública del dueño
+            "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc",  // Clave pública de la GN del dueño
+            2125              // Quarks
+        );
+        console.log(result);
+    } catch (error) {
+        console.error('Error en el despliegue:', error);
+    }
+})();*/
+
+ 
+    

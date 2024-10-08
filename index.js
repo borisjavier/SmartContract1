@@ -5,15 +5,16 @@ const app = express();
 app.use(express.json());
 
 
+//TEST: runContract(5, 10, 60, 1726598373, "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db", "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc", 3000);
 
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
+  //console.log('Datos recibidos:', req.body);  // Imprimir los datos del cuerpo de la solicitud
+  
   const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;  // Obtener el parámetro `size` de la solicitud
-
+  
   try {
-    // Llamamos a la función compileContract y obtenemos el nombre del archivo generado
     const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);  
-
     if (result && typeof result === 'object' && result.contractId) {
       // Enviamos la respuesta de éxito con los detalles del contrato
       res.status(200).json({
@@ -52,3 +53,8 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Cloud Run escuchando en el puerto ${PORT}`);
 });
+
+/**
+ * TEST
+ * Invoke-RestMethod -Uri "http://localhost:8080/gen-contract" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"size": 5, "tokens": 10, "lapso": 60, "start": 1726598373, "pubOwner": "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db", "pubGN": "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc", "quarks": 3000}'
+ */

@@ -2,6 +2,7 @@
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
             import { adminPublicKey } from './config';
+            import { promises as fs } from 'fs';
 
             import * as dotenv from 'dotenv'
 
@@ -57,26 +58,26 @@
                     paymentQuarks: contract.amountGN
                 };
 
-                console.log(JSON.stringify(result));
-                return result;
+                //console.log(result);
+                await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
             }
 
             async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
                 
                 const fechas: FixedArray<Timestamp, typeof N> = fill(0n, N);
-                console.log('fechas antes de: ', fechas)
+                //console.log('fechas antes de: ', fechas)
 
                 for (let i = 0; i < n; i++) {
                     const fecha = BigInt(fechaInicio + i * l);
-                    console.log('fecha: ', fecha)
+                    //console.log('fecha: ', fecha)
                     fechas[i] = BigInt(fecha);
                 }
 
-                console.log('fechas después de: ', fechas);
+                //console.log('fechas después de: ', fechas);
 
                 return fechas;
             }
 
-            main(5000, 60, 1726598373, '02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db', '02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc', 2125).catch(console.error);
+            main(10, 60, 1726598373, "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db", "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc", 3000).catch(console.error);
 
         
