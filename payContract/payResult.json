@@ -1,0 +1,24 @@
+{
+  "lastStateTxid": "6b6944993fc174992893591c5d899098d2bbc3ede67b70fec6fb0efc78b6b8b1",
+  "state": [
+    {
+      "timestamp": "1728500207",
+      "txid": "b1a7597134f1edbb9ab2dd421458c78ec58ae92a08f2a3294dc28556d762680d"
+    },
+    {
+      "timestamp": "1728501747",
+      "txid": "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23"
+    },
+    {
+      "timestamp": "1728502854",
+      "txid": "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23"
+    },
+    {
+      "timestamp": "1728503669",
+      "txid": "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23"
+    }
+  ],
+  "addressGN": "b82673be409a443185e63015c40348f2572cc56c",
+  "amountGN": "3000",
+  "isValid": false
+}

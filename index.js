@@ -1,5 +1,6 @@
 const express = require('express');
-const runContract = require('./genContract.js')
+const runContract = require('./genContract.js');
+const payScript = require('./payScript.js');
 
 const app = express();
 app.use(express.json());
@@ -38,7 +39,39 @@ app.post('/gen-contract', async (req, res) => {
 });
 
 // Endpoint para desplegar un contrato
-app.post('/deploy-contract', async (req, res) => {
+app.post('/pay', async (req, res) => {
+  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;  // Obtener el parámetro `size` de la solicitud
+
+  try {
+    const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);  // Llamar a la función para desplegar el contrato
+    if (result && typeof result === 'object' && result.lastStateTxid) {
+      // Enviamos la respuesta de éxito con los detalles del contrato
+      /**
+       * lastStateTxid: unlockTx.id,
+                    state: nextInstance.dataPayments,
+                    addressGN: nextInstance.addressGN,
+                    amountGN: nextInstance.amountGN
+       */
+      res.status(200).json({
+        message: 'Se ha efectuado un pago en el contrato.',
+        contractId: result.lastStateTxid,
+        state: result.state,
+        addressGN: result.addressGN,
+        amountGN: result.amountGN,
+        isValid: result.isValid
+      });
+    } else {
+      // Si el resultado no es válido, lanzamos un error personalizado
+      throw new Error('La respuesta del contrato es inválida o incompleta');
+    }
+  } catch (error) {
+    res.status(500).send({ error: `Error al desplegar contrato: ${error.message}` });
+  }
+});
+
+
+
+app.post('/transfer', async (req, res) => {
   const { size } = req.body;  // Obtener el parámetro `size` de la solicitud
 
   try {
@@ -55,6 +88,12 @@ app.listen(PORT, () => {
 });
 
 /**
- * TEST
+ * TEST DEPLOY NEW INSTANCE
+ * size, tokens, lapso, start, pubOwner, pubGN, quarks 
  * Invoke-RestMethod -Uri "http://localhost:8080/gen-contract" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"size": 5, "tokens": 10, "lapso": 60, "start": 1726598373, "pubOwner": "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db", "pubGN": "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc", "quarks": 3000}'
+ * 
+ * TEST PAY
+ * size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
+ * Invoke-RestMethod -Uri "http://localhost:8080/pay" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"size": 5, "tokens": 10, "lapso": 60, "start": 1726598373, "pubOwner": "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db", "pubGN": "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc", "quarks": 3000}'
+ * 
  */

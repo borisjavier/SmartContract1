@@ -5,6 +5,7 @@ const { exec } = require('child_process'); // Carga de módulos con require para
 const path = require('path');
 const fs = require('fs').promises; // Acceso a fs.promises para funciones async
 const createAndCompileAndDeploy = require('./deployContract');
+const { checkCache, restoreArtifacts } = require('./utilities')
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();
 
@@ -12,7 +13,6 @@ const mutex = new Mutex();
 
 const contractDir = path.resolve(__dirname, './payContract'); 
 const cacheDir = path.resolve(__dirname, './cache'); 
-const artifactsDir = path.resolve(contractDir, './artifacts');  // Directorio artifacts
 
 
 // Ruta al directorio de contratos dentro de `payContract`
@@ -168,23 +168,45 @@ export class PaymentContract extends SmartContract {
       assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
   }
 
-  @method()
-  updateArr(currentDate: Timestamp, txid: TxId): void {
+      @method()
+      updateArr(currentDate: Timestamp, txid: TxId): void {
+          let done = true;
 
-      for (let i = 0; i < N; i++) {
-          
-          if(this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
-          if (i === N - 1) {
-              this.isValid = false;
-          }
-          this.dataPayments[i] = {
-              timestamp: currentDate,
-              txid: txid
-          }
+          for (let i = 0; i < N; i++) {
+              if (done && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
+                  if (i === N - 1 && this.filledTxids(this.dataPayments)) {
+                      this.isValid = false;
+                  }
+                  this.dataPayments[i] = {
+                      timestamp: currentDate,
+                      txid: txid
+                  };
+                  done = false;
+              }
           }
       }
-  }
+      
 
+@method()
+filledTxids(dataPayments: Payments): boolean {
+    let allFilled = true;
+    let done = true;
+
+    if (N < 1) {
+        allFilled = false;
+    }
+
+    for (let i = 0; i < N - 1; i++) {
+        if (done && dataPayments[i].txid === this.EMPTY) {
+            allFilled = false;
+            done = false;
+        }
+    }
+
+    assert(allFilled, 'Some txids are still empty');
+
+    return allFilled;  
+}
 
   
   @method() 
@@ -200,7 +222,7 @@ export class PaymentContract extends SmartContract {
 
       //verify owner
       this.verifyId(oldOwner);
-      assert(this.isOwner, \`Not the owner of this contract\`)
+      assert(this.isOwner, 'Not the owner of this contract')
       // contract is still valid
       assert(this.isValid, 'Contract is no longer valid');
 
@@ -230,7 +252,7 @@ export class PaymentContract extends SmartContract {
 
       //verify owner
       this.verifyId(oldOwner);
-      assert(this.isOwner, \`Not the owner of this contract\`)
+      assert(this.isOwner, 'Not the owner of this contract')
 
       // contract is still valid
       assert(this.isValid, 'Contract is no longer valid');
@@ -254,24 +276,8 @@ export class PaymentContract extends SmartContract {
   }
 
 }
-
 `;
 }
-
-async function checkCache(size) {
-    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
-    try {
-      // Verifica si los archivos de caché existen
-      const files = await fs.readdir(cachePath);
-      if (files.length === 5) {
-        console.log(`Artifacts encontrados en la caché para size ${size}.`);
-        return true;  // Si los artifacts están presentes, indica que ya están en caché
-      }
-    } catch (error) {
-      // Si hay un error (por ejemplo, carpeta no encontrada), significa que la caché no existe
-      return false;
-    }
-  }
 
   async function saveArtifacts(size) {
     const artifacts = ['paycontract.json', 'paycontract.scrypt', 'paycontract.scrypt.map', 'paycontract.transformer.json'];
@@ -297,55 +303,6 @@ async function checkCache(size) {
         throw error;
         }
   }
-
-async function restoreArtifacts(size) {
-    // Lista de artifacts a restaurar desde la caché
-    const artifacts = [
-      'paycontract.json', 
-      'paycontract.scrypt', 
-      'paycontract.scrypt.map', 
-      'paycontract.transformer.json'
-    ];
-  
-    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
-    const contractDirPath = path.resolve(contractDir, 'src', 'contracts');  // Ruta a la carpeta 'src/contracts'
-    const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
-  
-    try {
-      // 1. Eliminar todo el contenido de 'artifacts' antes de restaurar los archivos
-      await fs.rm(artifactsDirPath, { recursive: true, force: true });
-      console.log(`Directorio ${artifactsDirPath} limpiado.`);
-  
-      // 2. Restaurar los artifacts a la carpeta 'artifacts'
-      for (const file of artifacts) {
-        const srcPath = path.resolve(cachePath, file);      // Ruta de origen en la caché
-        const destPath = path.resolve(artifactsDirPath, file);  // Ruta destino en 'artifacts'
-        await fs.copyFile(srcPath, destPath);               // Copia el archivo desde la caché a 'artifacts'
-        console.log(`Artifact ${file} restaurado desde la caché para size ${size}.`);
-      }
-  
-      // 3. Eliminar todo el contenido de 'src/contracts' antes de copiar el archivo paycontract.ts
-      await fs.rm(contractDirPath, { recursive: true, force: true });
-      console.log(`Directorio ${contractDirPath} limpiado.`);
-  
-      // 4. Restaurar el archivo paycontract.ts a 'src/contracts'
-      const contractFile = 'paycontract.ts';
-      const contractSrcPath = path.resolve(cachePath, contractFile);  // Ruta de origen en la caché
-      const contractDestPath = path.resolve(contractDirPath, contractFile);  // Ruta destino en 'src/contracts'
-  
-      // Crear nuevamente el directorio 'src/contracts' si ha sido eliminado
-      await fs.mkdir(contractDirPath, { recursive: true });
-  
-      await fs.copyFile(contractSrcPath, contractDestPath);  // Copiar el archivo paycontract.ts a 'src/contracts'
-      console.log(`Archivo ${contractFile} restaurado desde la caché para size ${size}.`);
-  
-    } catch (error) {
-      console.error(`Error al restaurar los artifacts desde la caché: ${error.message}`);
-      throw error;
-    }
-  }
-  
-  
 
 async function createCompileAndDeploy(size, qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
   try {

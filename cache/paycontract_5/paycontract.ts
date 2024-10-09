@@ -22,7 +22,7 @@ export type Payment = {
   txid: TxId
 }
 
-export const N = 4
+export const N = 5
 
 export type Payments = FixedArray<Payment, typeof N>
 
@@ -108,45 +108,23 @@ export class PaymentContract extends SmartContract {
       assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
   }
 
-      @method()
-      updateArr(currentDate: Timestamp, txid: TxId): void {
-          let done = true;
+  @method()
+  updateArr(currentDate: Timestamp, txid: TxId): void {
 
-          for (let i = 0; i < N; i++) {
-              if (done && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-                  if (i === N - 1 && this.filledTxids(this.dataPayments)) {
-                      this.isValid = false;
-                  }
-                  this.dataPayments[i] = {
-                      timestamp: currentDate,
-                      txid: txid
-                  };
-                  done = false;
-              }
+      for (let i = 0; i < N; i++) {
+          
+          if(this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
+          if (i === N - 1) {
+              this.isValid = false;
+          }
+          this.dataPayments[i] = {
+              timestamp: currentDate,
+              txid: txid
+          }
           }
       }
-      
+  }
 
-@method()
-filledTxids(dataPayments: Payments): boolean {
-    let allFilled = true;
-    let done = true;
-
-    if (N < 1) {
-        allFilled = false;
-    }
-
-    for (let i = 0; i < N - 1; i++) {
-        if (done && dataPayments[i].txid === this.EMPTY) {
-            allFilled = false;
-            done = false;
-        }
-    }
-
-    assert(allFilled, 'Some txids are still empty');
-
-    return allFilled;  
-}
 
   
   @method() 
@@ -162,7 +140,7 @@ filledTxids(dataPayments: Payments): boolean {
 
       //verify owner
       this.verifyId(oldOwner);
-      assert(this.isOwner, 'Not the owner of this contract')
+      assert(this.isOwner, `Not the owner of this contract`)
       // contract is still valid
       assert(this.isValid, 'Contract is no longer valid');
 
@@ -192,7 +170,7 @@ filledTxids(dataPayments: Payments): boolean {
 
       //verify owner
       this.verifyId(oldOwner);
-      assert(this.isOwner, 'Not the owner of this contract')
+      assert(this.isOwner, `Not the owner of this contract`)
 
       // contract is still valid
       assert(this.isValid, 'Contract is no longer valid');
@@ -216,3 +194,4 @@ filledTxids(dataPayments: Payments): boolean {
   }
 
 }
+

@@ -1,5 +1,5 @@
 {
-  "contractId": "5d6bd2657627f77abe89e83d04b900b55c3b61379858710d0bcdf09f50d6834b",
+  "contractId": "7e23eefbeb20b031633375e7b562220d3517fcceb5ee401d3117fc4849fdce33",
   "state": [
     {
       "timestamp": "1726598373",
@@ -15,10 +15,6 @@
     },
     {
       "timestamp": "1726598553",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1726598613",
       "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
     }
   ],
