@@ -46,8 +46,9 @@ async function compileContracts() {
 return new Promise((resolve, reject) => {
     exec(`npx scrypt-cli compile`, { cwd: contractDir }, (err, stdout, stderr) => {
     if (err) {
-        console.error(`Error al compilar: ${stderr}`);
-        reject(`Error al compilar los contratos: ${stderr}`);
+        console.error(`Error al compilar. STDERR: ${stderr}`);
+        console.error(`STDOUT: ${stdout}`);  // También mostrar lo que se generó en stdout
+        reject(`Error al compilar los contratos: ${stderr || stdout}`);
     } else {
         console.log(`Compilación exitosa: ${stdout}`);
         resolve(stdout);
