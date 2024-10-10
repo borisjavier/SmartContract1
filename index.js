@@ -1,6 +1,8 @@
 const express = require('express');
-const runContract = require('./genContract.js');
+const runContract = require('./deployContract.js');
 const payScript = require('./payScript.js');
+const { Mutex } = require('async-mutex');
+const mutex = new Mutex();  // Mutex compartido para ambas funciones
 
 const app = express();
 app.use(express.json());
@@ -10,64 +12,56 @@ app.use(express.json());
 
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
-  //console.log('Datos recibidos:', req.body);  // Imprimir los datos del cuerpo de la solicitud
-  
-  const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;  // Obtener el parámetro `size` de la solicitud
+  const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;
   
   try {
-    const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);  
-    if (result && typeof result === 'object' && result.contractId) {
-      // Enviamos la respuesta de éxito con los detalles del contrato
-      res.status(200).json({
-        message: 'Contrato generado exitosamente',
-        contractId: result.contractId,
-        state: result.state,
-        addressOwner: result.addressOwner,
-        addressGN: result.addressGN,
-        paymentQuarks: result.paymentQuarks
-      });
-    } else {
-      // Si el resultado no es válido, lanzamos un error personalizado
-      throw new Error('La respuesta del contrato es inválida o incompleta');
-    }
-
+    await mutex.runExclusive(async () => {
+      const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);
+      if (result && typeof result === 'object' && result.contractId) {
+        res.status(200).json({
+          message: 'Contrato generado exitosamente',
+          contractId: result.contractId,
+          state: result.state,
+          addressOwner: result.addressOwner,
+          addressGN: result.addressGN,
+          paymentQuarks: result.paymentQuarks
+        });
+      } else {
+        throw new Error('La respuesta del contrato es inválida o incompleta');
+      }
+    });
   } catch (error) {
-    // Manejo de errores, devolvemos el error como JSON
     console.error(`Error en la compilación: ${error.message}`);
     res.status(500).json({ error: `Error al generar contrato: ${error.message}` });
   }
 });
 
+
 // Endpoint para desplegar un contrato
 app.post('/pay', async (req, res) => {
-  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;  // Obtener el parámetro `size` de la solicitud
+  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;
 
   try {
-    const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);  // Llamar a la función para desplegar el contrato
-    if (result && typeof result === 'object' && result.lastStateTxid) {
-      // Enviamos la respuesta de éxito con los detalles del contrato
-      /**
-       * lastStateTxid: unlockTx.id,
-                    state: nextInstance.dataPayments,
-                    addressGN: nextInstance.addressGN,
-                    amountGN: nextInstance.amountGN
-       */
-      res.status(200).json({
-        message: 'Se ha efectuado un pago en el contrato.',
-        contractId: result.lastStateTxid,
-        state: result.state,
-        addressGN: result.addressGN,
-        amountGN: result.amountGN,
-        isValid: result.isValid
-      });
-    } else {
-      // Si el resultado no es válido, lanzamos un error personalizado
-      throw new Error('La respuesta del contrato es inválida o incompleta');
-    }
+    await mutex.runExclusive(async () => {
+      const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
+      if (result && typeof result === 'object' && result.lastStateTxid) {
+        res.status(200).json({
+          message: 'Se ha efectuado un pago en el contrato.',
+          contractId: result.lastStateTxid,
+          state: result.state,
+          addressGN: result.addressGN,
+          amountGN: result.amountGN,
+          isValid: result.isValid
+        });
+      } else {
+        throw new Error('La respuesta del contrato es inválida o incompleta');
+      }
+    });
   } catch (error) {
     res.status(500).send({ error: `Error al desplegar contrato: ${error.message}` });
   }
 });
+
 
 
 

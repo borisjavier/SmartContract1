@@ -1,5 +1,15 @@
+const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs').promises; // Acceso a fs.promises para funciones async
+
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: 'goldennotes-app.appspot.com' // Reemplaza con el nombre de tu bucket
+});
+
+const bucket = admin.storage().bucket();
 
 //Ruta al json para determinar size de lo que tenemos
 const contractPath = path.join(__dirname, 'contractDir/artifacts/paycontract.json');
@@ -27,7 +37,13 @@ async function dirExists(dirPath) {
     }
 }
 
-async function checkCache(size) {
+async function downloadFile(fileName, destinationPath) {
+    const file = bucket.file(fileName);
+    await file.download({ destination: destinationPath });
+    console.log(`Archivo ${fileName} descargado a ${destinationPath}`);
+}
+
+/*async function checkCache(size) {
     const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
     
     // Verificar si el directorio de caché existe
@@ -52,9 +68,34 @@ async function checkCache(size) {
         console.error(`Error al leer el directorio de caché: ${error.message}`);
         return false;  // Si hay un error al leer el directorio, se asume que no hay caché
     }
+}*/
+
+async function checkCache(size) {
+    const cacheFolder = `sCrypt cache/paycontract_${size}`;
+    const expectedFiles = ['paycontract.json', 'paycontract.scrypt', 'paycontract.scrypt.map', 'paycontract.transformer.json'];
+
+    try {
+        // Listar archivos en el directorio de Firebase Storage
+        const [files] = await bucket.getFiles({ prefix: `${cacheFolder}/` });
+
+        // Extraer solo los nombres de los archivos desde Firebase
+        const fileNames = files.map(file => path.basename(file.name));
+
+        // Comprobar si los archivos esperados están presentes
+        if (expectedFiles.every(file => fileNames.includes(file))) {
+            console.log(`Artifacts encontrados en caché para size ${size}.`);
+            return true;
+        } else {
+            console.log(`Se encontraron ${fileNames.length} archivos, se esperaban 5 para size ${size}.`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error al verificar caché para size ${size}: ${error.message}`);
+        return false;
+    }
 }
 
-async function restoreArtifacts(size) {
+/*async function restoreArtifacts(size) {
     // Lista de artifacts a restaurar desde la caché
     const artifacts = [
       'paycontract.json', 
@@ -109,7 +150,49 @@ async function restoreArtifacts(size) {
       console.error(`Error al restaurar los artifacts desde la caché: ${error.message}`);
       throw error;
     }
-  }
+  }*/
+
+  async function restoreArtifacts(size) {
+    const artifacts = [
+        'paycontract.json', 
+        'paycontract.scrypt', 
+        'paycontract.scrypt.map', 
+        'paycontract.transformer.json'
+    ];
+
+    const cacheFolder = `sCrypt cache/paycontract_${size}`;
+    const contractDirPath = path.resolve('src', 'contracts');  // Ruta local para 'src/contracts'
+    const artifactsDirPath = path.resolve('artifacts');  // Ruta local para 'artifacts'
+
+    try {
+        // Limpiar el directorio 'artifacts' local
+        await fs.rm(artifactsDirPath, { recursive: true, force: true });
+        console.log(`Directorio ${artifactsDirPath} limpiado.`);
+        await fs.mkdir(artifactsDirPath, { recursive: true });
+
+        // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
+        for (const file of artifacts) {
+            const srcPath = `${cacheFolder}/${file}`;
+            const destPath = path.resolve(artifactsDirPath, file);
+            await downloadFile(srcPath, destPath);
+        }
+
+        // Limpiar y preparar el directorio 'src/contracts'
+        await fs.rm(contractDirPath, { recursive: true, force: true });
+        console.log(`Directorio ${contractDirPath} limpiado.`);
+        await fs.mkdir(contractDirPath, { recursive: true });
+
+        // Restaurar 'paycontract.ts' desde Firebase a 'src/contracts'
+        const contractFile = 'paycontract.ts';
+        const contractSrcPath = `${cacheFolder}/${contractFile}`;
+        const contractDestPath = path.resolve(contractDirPath, contractFile);
+        await downloadFile(contractSrcPath, contractDestPath);
+
+    } catch (error) {
+        console.error(`Error al restaurar los artifacts para size ${size}: ${error.message}`);
+        throw error;
+    }
+}
 
   async function getDataPaymentsSize() {
     try {
