@@ -2,11 +2,12 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs').promises; // Acceso a fs.promises para funciones async
 
-const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'goldennotes-app.appspot.com' // Reemplaza con el nombre de tu bucket
+  storageBucket: process.env.STORAGE_BUCKET // Reemplaza con el nombre de tu bucket
 });
 
 const bucket = admin.storage().bucket();
