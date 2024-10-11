@@ -132,7 +132,7 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
           async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
             try {
                 const sizePresent = await getDataPaymentsSize();
-                
+                console.log('Size present is: ', sizePresent)
                 // Verificar si el tamaño actual es diferente del solicitado o si no hay datos almacenados
                 if (sizePresent !== size || sizePresent == null) {
                     const isCached = await checkCache(size);

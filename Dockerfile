@@ -17,10 +17,10 @@ RUN npm install
 COPY . .
 
 # Cambiar al directorio payContract
-WORKDIR /usr/src/app/SmartContracts/payContract
+WORKDIR /usr/src/app/payContract
 
 # Copiar package.json y package-lock.json de payContract
-COPY ./payContract/package*.json ./
+COPY package*.json ./
 
 # Instalar dependencias de payContract
 RUN npm install
