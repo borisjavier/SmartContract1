@@ -14,8 +14,8 @@ app.use(express.json());
 app.post('/gen-contract', async (req, res) => {
   const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;
   
-  try {
-    await mutex.runExclusive(async () => {
+  //try {
+    //await mutex.runExclusive(async () => {
       const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);
       if (result && typeof result === 'object' && result.contractId) {
         res.status(200).json({
@@ -29,11 +29,11 @@ app.post('/gen-contract', async (req, res) => {
       } else {
         throw new Error('La respuesta del contrato es inválida o incompleta');
       }
-    });
-  } catch (error) {
+    //});
+  /*} catch (error) {
     console.error(`Error en la compilación: ${error.message}`);
     res.status(500).json({ error: `Error al generar contrato: ${error.message}` });
-  }
+  }*/
 });
 
 
@@ -41,8 +41,8 @@ app.post('/gen-contract', async (req, res) => {
 app.post('/pay', async (req, res) => {
   const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;
 
-  try {
-    await mutex.runExclusive(async () => {
+  //try {
+    //await mutex.runExclusive(async () => {
       const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
       if (result && typeof result === 'object' && result.lastStateTxid) {
         res.status(200).json({
@@ -56,10 +56,10 @@ app.post('/pay', async (req, res) => {
       } else {
         throw new Error('La respuesta del contrato es inválida o incompleta');
       }
-    });
-  } catch (error) {
+    //});
+  /*} catch (error) {
     res.status(500).send({ error: `Error al desplegar contrato: ${error.message}` });
-  }
+  }*/
 });
 
 
