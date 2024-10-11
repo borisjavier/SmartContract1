@@ -194,58 +194,6 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
     }
 }
 
-/*async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
-try {
-    const sizePresent = await getDataPaymentsSize()
-    if (sizePresent !== size || sizePresent == null) {
-        const isCached = await checkCache(size);
-        if (isCached) {
-        console.log(`Usando artifacts en caché para size ${size}.`);
-            //1 y 2 Si la cache existe, pega los artefactos y el código fuetne
-        await restoreArtifacts(size);  // Restaurar los artifacts a la carpeta `artifacts`
-        
-        } else {
-            // 1. Crear los contratos
-        //await generateContracts(size);
-        // 2. Compilar los contratos
-        //await compileContracts();
-        throw new Error(`No artifacts found for contract of size ${size}`);
-        // 3. Salvar los artefactos
-        //await saveArtifacts(size);
-        }
-    } 
-    // 4. Llamar a payScript.ts
-    console.log('Llamando payScript...');
-    const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
-    console.log('Pago registrado exitosamente.');
-    return result;
-  } catch (error) {
-      throw new Error(`Error en el proceso: ${error.message}`);
-  }
-}
-
-async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
-    // Adquiere el mutex
-    const release = await mutex.acquire();
-    try {
-      // Llamamos a `createPayScriptAndCall` y esperamos el resultado
-      const result = await createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
-  
-      // Verificamos que el resultado sea un objeto válido
-      if (result && typeof result === 'object' && result.lastStateTxid) {
-          console.log('Proceso completado exitosamente. Pago efectuado:', JSON.stringify(result, null, 2));
-          return result;  // Retorna el resultado para su posterior uso
-          } else {
-              throw new Error('La respuesta del llamado no es válida o no contiene lastStateTxid.');
-          }
-      } catch (error) {
-          console.error('Error en el proceso de creación o llamado:', error.message);
-          throw error;  // Propagamos el error para ser manejado en niveles superiores
-      } finally {
-          // Liberamos el mutex una vez que el proceso ha terminado, sea exitoso o haya fallado
-          release();
-      }
-  }*/
 
       async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
         try {
