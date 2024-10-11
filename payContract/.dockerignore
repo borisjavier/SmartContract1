@@ -1,5 +1,5 @@
+node_modules/
 tsconfig.json
-src/
 .vscode
 .husky
 .eslint*
@@ -16,10 +16,6 @@ src/
 *.md
 .prettierrc
 .prettierignore
-
-
-deploy.ts
 tsconfig-scryptTS.json
-artifacts/**/*.scrypt
-artifacts/**/*.scrypt.map
-artifacts/**/*.transformer.json
+
+
