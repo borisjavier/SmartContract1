@@ -22,8 +22,14 @@ WORKDIR /usr/src/app/payContract
 # Copiar package.json y package-lock.json de payContract
 COPY package*.json ./
 
+# Copiar todos los archivos de pruebas
+COPY ./tests ./tests
+
 # Instalar dependencias de payContract
 RUN npm install
+
+# listar todos los archivos de pruebas
+RUN ls -R /usr/src/app/tests
 
 RUN npm i scrypt-cli@0.2.1 --save-dev
 
