@@ -20,10 +20,10 @@ COPY . .
 WORKDIR /usr/src/app/payContract
 
 # Copiar package.json y package-lock.json de payContract
-COPY package*.json ./
+COPY ./payContract/package*.json ./
 
 # Copiar todos los archivos de pruebas
-COPY ./tests ./tests
+COPY ./payContract/tests ./tests
 
 # Instalar dependencias de payContract
 RUN npm install
