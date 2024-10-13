@@ -29,7 +29,7 @@ COPY ./payContract/tests ./tests
 RUN npm install
 
 # listar todos los archivos de pruebas
-RUN ls -R /usr/src/app/payContract/tests
+RUN ls -R /usr/src/app/payContract
 
 RUN npm i scrypt-cli@0.2.1 --save-dev
 
