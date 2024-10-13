@@ -1,11 +1,7 @@
 **node_modules/
-tsconfig-scryptTS.json
-scrypt.index.json
-payContract/tsconfig.json
 payContract/.vscode
 payContract/.husky
 payContract/.eslint*
-**.js.map
 payContract/.travis.yml
 **.log
 payContract/.gitignore
@@ -18,5 +14,3 @@ payContract/.mocharc-testnet.json
 **.md
 payContract/.prettierrc
 payContract/.prettierignore
-payContract/tsconfig-scryptTS.json
-payContract/scrypt.index.json
