@@ -180,7 +180,7 @@ async function checkCache(size) {
 
         // Limpiar y preparar el directorio 'src/contracts'
         await fs.rm(contractDirPath, { recursive: true, force: true });
-        console.log(`Directorio ${contractDirPath} limpiado.`);
+        console.log(`El Directorio ${contractDirPath} fue limpiado.`);
         await fs.mkdir(contractDirPath, { recursive: true });
 
         // Restaurar 'paycontract.ts' desde Firebase a 'src/contracts'

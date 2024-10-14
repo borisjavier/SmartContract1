@@ -140,7 +140,11 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                     if (isCached) {
                         console.log(`Usando artifacts en caché para size ${size}.`);
                         // Si la caché existe, restaurar los artifacts y el código fuente
-                        await restoreArtifacts(size);
+                        try {
+                            await restoreArtifacts(size);
+                        } catch {
+                            throw new Error('Artifacts were not restored.')
+                        }
                     } else {
                         // Si no hay caché, lanzar un error
                         throw new Error(`No artifacts found for contract of size ${size}`);

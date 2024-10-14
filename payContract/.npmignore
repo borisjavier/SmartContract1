@@ -3,7 +3,6 @@ src/
 .vscode
 .husky
 .eslint*
-*.js.map
 .travis.yml
 *.log
 .gitignore
@@ -18,8 +17,6 @@ src/
 .prettierignore
 
 
-deploy.ts
-tsconfig-scryptTS.json
 artifacts/**/*.scrypt
 artifacts/**/*.scrypt.map
 artifacts/**/*.transformer.json
