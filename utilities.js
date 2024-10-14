@@ -162,8 +162,8 @@ async function checkCache(size) {
     ];
 
     const cacheFolder = `sCrypt cache/paycontract_${size}`;
-    const contractDirPath = path.resolve('src', 'contracts');  // Ruta local para 'src/contracts'
-    const artifactsDirPath = path.resolve('artifacts');  // Ruta local para 'artifacts'
+    const contractDirPath = path.resolve(contractDir, 'src', 'contracts');  // Ruta a la carpeta 'src/contracts'
+    const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
 
     try {
         // Limpiar el directorio 'artifacts' local
