@@ -42,7 +42,7 @@
                 const pubKey = PubKey(privateKey.publicKey.toHex());
                 const publicKey = privateKey.publicKey;
 
-                const ownerPubKey = bsv.PublicKey.fromHex('02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db');//Alice's Pubkey
+                const ownerPubKey = bsv.PublicKey.fromHex('032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee');//Alice's Pubkey
                 const owner = Addr(ownerPubKey.toAddress().toByteString());
                 const currentDate: bigint = BigInt(Math.floor(Date.now() / 1000));
                 const tx0 = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
@@ -52,15 +52,40 @@
                 await PaymentContract.loadArtifact()
 
                 
-                const txResponse = await provider.getTransaction('b84e3d7be42c73897575547b0f23515b926331d99499cb89ad8e54a7f22eca80');
+                const txResponse = await provider.getTransaction(txId);
                 
                 const instance = PaymentContract.fromTx(txResponse, atOutputIndex)
                 await instance.connect(signer); //getDefaultSigner(privateKey)
                 
-                const datas: FixedArray<Timestamp, typeof N> = [1728500207n, 1728501747n, 1728502854n, 1726598553n];
+                const datas: FixedArray<Timestamp, typeof N> = [ 1732131034n, 1732131135n, 1732128406n, 1732128426n, 1732128446n, 1732128466n, 1732128486n, 1732128506n, 1732128526n, 1732128546n, 1732128566n, 1732128586n, 1732128606n, 1732128626n, 1732128646n, 1732128666n, 1732128686n, 1732128706n, 1732128726n, 1732128746n, 1732128766n, 1732128786n, 1732128806n, 1732128826n ]
             
                 //console.log('datas: ', datas)
-                const txids: FixedArray<ByteString, typeof N> = ["b1a7597134f1edbb9ab2dd421458c78ec58ae92a08f2a3294dc28556d762680d","b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23","b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23","501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"]
+                const txids: FixedArray<ByteString, typeof N> = [
+                    "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23",
+                    "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+                ]
 
                 let isValid: boolean = true;
                 //console.log('txids: ', txids)
@@ -74,10 +99,10 @@
                     }
                 }
                 for (let i = 0; i < N; i++) {
-                    dataPayments[i] = {
+                    /*dataPayments[i] = {
                         timestamp: datas[i],
                         txid: txids[i],
-                    }
+                    }*/
                     if(dataPayments[i].timestamp < currentDate && dataPayments[i].txid == tx0) {
                         console.log(dataPayments[i].timestamp + 'es menor que currentDate y ' + dataPayments[i].txid + ' es igual a tx0')
                         if (i === N - 1 && filledTxids(dataPayments, tx0)) {
@@ -96,7 +121,7 @@
                 }
                 console.log('dataPayments desde call.ts: ', dataPayments);
                 console.log('isValid: ', isValid); // Imprimir el estado final de isValid
-                const qtyTokens: bigint = 10n
+                const qtyTokens: bigint = 1n
                 
                 try {
                     const nextInstance = instance.next();
@@ -142,6 +167,6 @@
 
             }
 
-            main("b84e3d7be42c73897575547b0f23515b926331d99499cb89ad8e54a7f22eca80").catch(console.error);
+            main("58285e7e615806a7e42d71e30972e65f18712c5e16b438142fa806a175196339").catch(console.error);
 
         

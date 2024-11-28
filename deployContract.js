@@ -6,7 +6,20 @@ const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utiliti
 
 const contractDir = path.resolve(__dirname, './payContract');
 
+async function cleanResultFile(resultFilePath) {
+    try {
+        // Borrar el archivo si existe
+        await fs.unlink(resultFilePath).catch(err => {
+            // Si el archivo no existe, ignorar el error
+            if (err.code !== 'ENOENT') {
+                throw err; // Lanzar el error si es otro tipo de error
+            }
+        });
 
+    } catch (error) {
+        console.error('Error al limpiar y crear el archivo:', error);
+    }
+}
 
 const deployFileName = `deploy.ts`;
 const deployPath = path.resolve(contractDir, deployFileName);
@@ -15,7 +28,7 @@ const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
     try {
-
+        cleanResultFile(resultFilePath);
         const deployCode = `
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';

@@ -8,7 +8,20 @@ const mutex = new Mutex();
 
 const contractDir = path.resolve(__dirname, './payContract');
 
+async function cleanResultFile(resultFilePath) {
+    try {
+        // Borrar el archivo si existe
+        await fs.unlink(resultFilePath).catch(err => {
+            // Si el archivo no existe, ignorar el error
+            if (err.code !== 'ENOENT') {
+                throw err; // Lanzar el error si es otro tipo de error
+            }
+        });
 
+    } catch (error) {
+        console.error('Error al limpiar y crear el archivo:', error);
+    }
+}
 
 const deployFileName = `payScript.ts`;
 const deployPath = path.resolve(contractDir, deployFileName);
@@ -19,6 +32,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
         const formattedTxids = JSON.stringify(txids);
         const bigNumberQtyTokens = `${qtyT}n`;
+        cleanResultFile(resultFilePath);
 
         const deployCode = `
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';

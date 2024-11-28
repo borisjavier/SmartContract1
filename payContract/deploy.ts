@@ -77,7 +77,7 @@
 
                 return fechas;
             }
-
-            main(1, 15552000, 1771632000, "0316480d9da880ec435d42a1f6428a00d27d738eb2bbf0ae7c2da94561af209225", "02b9acb0186ac12383aad6acddd48644c90d1e32cc7c352b4652a6d091412cffef", 2385).catch(console.error);
+            //(qtyT, l, fIn, ownerPub, ownerGN, quarks)//pub Alice, GNAddress: Punto (14HGSX9cmRvBnuJPd77KT1m2V1LqBnKbcz),
+            main(1, 20, 1732128366, "032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee", "02b9acb0186ac12383aad6acddd48644c90d1e32cc7c352b4652a6d091412cffef", 1000).catch(console.error);
 
         

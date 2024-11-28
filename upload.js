@@ -58,8 +58,10 @@ const folders = [
   'paycontract_96'
 ];
 
+
 // Ruta base donde se encuentran las carpetas
-const baseFolderPath = 'C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/cache'; // Cambia esto a tu ruta
+const baseFolderPath = 'C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/Golden Notes Notes/Backups/scrypt artifacts contract golden tokens/cache'
+//const baseFolderPath = 'C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/cache'; // Cambia esto a tu ruta
 const destinationBaseFolder = 'sCrypt cache'; // Carpeta de destino en el bucket
 
 // Procesa cada carpeta

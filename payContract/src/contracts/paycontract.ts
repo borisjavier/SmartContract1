@@ -22,7 +22,7 @@ export type Payment = {
   txid: TxId
 }
 
-export const N = 12
+export const N = 24;
 
 export type Payments = FixedArray<Payment, typeof N>
 
@@ -113,7 +113,7 @@ export class PaymentContract extends SmartContract {
           let done = true;
 
           for (let i = 0; i < N; i++) {
-              if (done && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
+              if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
                   if (i === N - 1 && this.filledTxids(this.dataPayments)) {
                       this.isValid = false;
                   }
@@ -137,7 +137,7 @@ filledTxids(dataPayments: Payments): boolean {
     }
 
     for (let i = 0; i < N - 1; i++) {
-        if (done && dataPayments[i].txid === this.EMPTY) {
+        if (done === true && dataPayments[i].txid === this.EMPTY) {
             allFilled = false;
             done = false;
         }
