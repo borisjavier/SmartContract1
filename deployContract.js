@@ -6,7 +6,7 @@ const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utiliti
 
 const contractDir = path.resolve(__dirname, './payContract');
 
-async function cleanResultFile(resultFilePath) {
+async function cleanResultFile(resultFilePath, result) {
     try {
         // Borrar el archivo si existe
         await fs.unlink(resultFilePath).catch(err => {
@@ -15,6 +15,9 @@ async function cleanResultFile(resultFilePath) {
                 throw err; // Lanzar el error si es otro tipo de error
             }
         });
+        // Crear (o sobrescribir) el archivo
+        await fs.writeFile(resultFilePath, JSON.stringify(result, null, 2));
+        console.log('Archivo creado o sobrescrito exitosamente.');
 
     } catch (error) {
         console.error('Error al limpiar y crear el archivo:', error);
@@ -28,7 +31,7 @@ const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
     try {
-        cleanResultFile(resultFilePath);
+        cleanResultFile(resultFilePath, '');
         const deployCode = `
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';

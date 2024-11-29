@@ -8,7 +8,7 @@ const mutex = new Mutex();
 
 const contractDir = path.resolve(__dirname, './payContract');
 
-async function cleanResultFile(resultFilePath) {
+async function cleanResultFile(resultFilePath, result) {
     try {
         // Borrar el archivo si existe
         await fs.unlink(resultFilePath).catch(err => {
@@ -17,6 +17,9 @@ async function cleanResultFile(resultFilePath) {
                 throw err; // Lanzar el error si es otro tipo de error
             }
         });
+        // Crear (o sobrescribir) el archivo
+        await fs.writeFile(resultFilePath, JSON.stringify(result, null, 2));
+        console.log('Archivo creado o sobrescrito exitosamente.');
 
     } catch (error) {
         console.error('Error al limpiar y crear el archivo:', error);
@@ -32,7 +35,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
         const formattedTxids = JSON.stringify(txids);
         const bigNumberQtyTokens = `${qtyT}n`;
-        cleanResultFile(resultFilePath);
+        cleanResultFile(resultFilePath, '');
 
         const deployCode = `
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';
