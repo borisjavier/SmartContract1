@@ -35,7 +35,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
         const formattedTxids = JSON.stringify(txids);
         const bigNumberQtyTokens = `${qtyT}n`;
-        cleanResultFile(resultFilePath, '');
+        await cleanResultFile(resultFilePath, '');
 
         const deployCode = `
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';
@@ -203,6 +203,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             });
         });
         const resultData = await fs.readFile(resultFilePath, 'utf8');
+        console.log(`resultData: ${resultData}`)
         const result = JSON.parse(resultData);
         return result;  // Retornar el resultado para su uso posterior        
     } catch (error) {

@@ -31,7 +31,7 @@ const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
     try {
-        cleanResultFile(resultFilePath, '');
+        await cleanResultFile(resultFilePath, '');
         const deployCode = `
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
