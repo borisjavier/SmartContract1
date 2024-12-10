@@ -31,7 +31,7 @@ app.post('/gen-contract', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`Error en la compilación: ${error.message}`);
+    console.error(`Error de despliegue: ${error.message}`);
     res.status(500).json({ error: `Error al generar contrato: ${error.message}` });
   }
 });

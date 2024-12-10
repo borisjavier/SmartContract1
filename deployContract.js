@@ -133,12 +133,23 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                 resolve();  // Resolver la promesa una vez que el despliegue sea exitoso
             });
         });
-        const resultData = await fs.readFile(resultFilePath, 'utf8');
-        const result = JSON.parse(resultData);
-        console.log('Resultado del contrato desplegado:', result);
 
-        return result;  // Retornar el resultado para su uso posterior
-        
+        try {
+            // Comprobar si el archivo existe
+            await fs.access(resultFilePath);
+            
+            // Leer el archivo si existe
+            const resultData = await fs.readFile(resultFilePath, 'utf8');
+            const result = JSON.parse(resultData);
+            console.log('Resultado del contrato desplegado:', result);
+            return result;  // Retornar el resultado para su uso posterior
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.error('El archivo no existe:', resultFilePath);
+            } else {
+                console.error('Error al leer el archivo:', error);
+            }
+        }
     } catch (error) {
         console.error(`Error en el proceso: ${error.message}`);
         throw error;

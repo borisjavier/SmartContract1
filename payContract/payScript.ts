@@ -42,13 +42,13 @@
                 const pubKey = PubKey(privateKey.publicKey.toHex());
                 const publicKey = privateKey.publicKey;
 
-                const ownerPubKey = bsv.PublicKey.fromHex('032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee');//Alice's Pubkey
+                const ownerPubKey = bsv.PublicKey.fromHex('0316480d9da880ec435d42a1f6428a00d27d738eb2bbf0ae7c2da94561af209225');//Alice's Pubkey
                 const owner = Addr(ownerPubKey.toAddress().toByteString());
                 const currentDate: bigint = BigInt(Math.floor(Date.now() / 1000));
                 const tx0 = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
                 //
             
-                const txIdPago = toByteString('b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23');//obtida da publicação da transação GN
+                const txIdPago = toByteString('6f2d2ac9309a6caf7f74b20491f380d4678cbb2fc5a2a3c4e42c11b3dce3acbe');//obtida da publicação da transação GN
                 await PaymentContract.loadArtifact()
 
                 
@@ -57,12 +57,10 @@
                 const instance = PaymentContract.fromTx(txResponse, atOutputIndex)
                 await instance.connect(signer); //getDefaultSigner(privateKey)
                 
-                const datas: FixedArray<Timestamp, typeof N> = [ 1732131034n, 1732131135n, 1732128406n, 1732128426n, 1732128446n, 1732128466n, 1732128486n, 1732128506n, 1732128526n, 1732128546n, 1732128566n, 1732128586n, 1732128606n, 1732128626n, 1732128646n, 1732128666n, 1732128686n, 1732128706n, 1732128726n, 1732128746n, 1732128766n, 1732128786n, 1732128806n, 1732128826n ]
+                const datas: FixedArray<Timestamp, typeof N> = [1732821319n, 1732827408n, 1732834608n, 1732841808n, 1732849008n, 1732856208n, 1732863408n, 1732870608n, 1732877808n, 1732885008n, 1732892208n, 1732899408n]
             
                 //console.log('datas: ', datas)
-                const txids: FixedArray<ByteString, typeof N> = [
-                    "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23",
-                    "b5d045517f0cc2f02fb034e049128535af119825ac2ea5bbac36ddea6e125a23",
+                const txids: FixedArray<ByteString, typeof N> = ["ac7306aacd668d697c12d4f833b5e343a08d20540ba4f48e1d36177fd80330da",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
@@ -73,19 +71,7 @@
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
-                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-                ]
+                    "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"]
 
                 let isValid: boolean = true;
                 //console.log('txids: ', txids)
@@ -167,6 +153,6 @@
 
             }
 
-            main("58285e7e615806a7e42d71e30972e65f18712c5e16b438142fa806a175196339").catch(console.error);
+            main("f371ddf520942dd16d0d6b93ca548b555aead634b870f4f5e0ee56f87a6bc36c").catch(console.error);
 
         

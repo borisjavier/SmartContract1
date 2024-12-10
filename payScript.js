@@ -202,10 +202,22 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                 resolve();  // Resolver la promesa una vez que el despliegue sea exitoso
             });
         });
-        const resultData = await fs.readFile(resultFilePath, 'utf8');
-        console.log(`resultData: ${resultData}`)
-        const result = JSON.parse(resultData);
-        return result;  // Retornar el resultado para su uso posterior        
+
+        try {
+            // Comprobar si el archivo existe
+            await fs.access(resultFilePath);           
+            const resultData = await fs.readFile(resultFilePath, 'utf8');
+            console.log(`resultData: ${resultData}`)
+            const result = JSON.parse(resultData);
+            return result;  // Retornar el resultado para su uso posterior 
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.error('El archivo no existe:', resultFilePath);
+            } else {
+                console.error('Error al leer el archivo:', error);
+            }
+        }
+               
     } catch (error) {
         console.error(`Error en el proceso: ${error.message}`);
         throw error;
