@@ -93,7 +93,7 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                 };
 
                 //console.log(result);
-                await fs.writeFile('${resultFilePath}', JSON.stringify(result, null, 2));
+                await fs.writeFile(${resultFilePath}, JSON.stringify(result, null, 2));
             }
 
             async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {

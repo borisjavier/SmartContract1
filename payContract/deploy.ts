@@ -47,19 +47,42 @@
                 const contract = new PaymentContract(owner, adminPubKey, addressGN, amountQuarks, qtyTokens, datas, txids);
 
                 await contract.connect(signer)
+                try {
+                    const deployTx = await contract.deploy(1);
 
-                const deployTx = await contract.deploy(1);
+                    const result = {
+                        contractId: deployTx.id,
+                        state: contract.dataPayments,
+                        addressOwner: realAddOwner,
+                        addressGN: realAddGN,
+                        paymentQuarks: contract.amountGN
+                    };
+    
+                    //console.log(result);
+                    await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
+                }
+                catch (error) {
+                    if (error.message.includes('txn-mempool-conflict')) {
+                        console.log('Mempool conflict detected. Retrying after 5 seconds...');
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+                        //return main(qtyT, l, fIn, ownerPub, ownerGN, quarks); // Intenta desplegar nuevamente
+                        const deployTx = await contract.deploy(1);
 
-                const result = {
-                    contractId: deployTx.id,
-                    state: contract.dataPayments,
-                    addressOwner: realAddOwner,
-                    addressGN: realAddGN,
-                    paymentQuarks: contract.amountGN
-                };
-
-                //console.log(result);
-                await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
+                        const result = {
+                            contractId: deployTx.id,
+                            state: contract.dataPayments,
+                            addressOwner: realAddOwner,
+                            addressGN: realAddGN,
+                            paymentQuarks: contract.amountGN
+                        };
+        
+                        //console.log(result);
+                        await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
+                    } else {
+                        console.error('Error during deployment:', error);
+                    }
+                }
+                
             }
 
             async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {

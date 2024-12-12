@@ -172,7 +172,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                     console.log('Contract unlocked, transaction ID:', unlockTx.id);
                     console.log('State: ' + JSON.stringify(nextInstance.dataPayments))
                     console.log('We will pay ' + nextInstance.amountGN + ' quarks to quarksownerGN: ' + JSON.stringify(nextInstance.addressGN) )
-                    await fs.writeFile('${resultFilePath}', JSON.stringify(result, null, 2));
+                    await fs.writeFile(${resultFilePath}, JSON.stringify(result, null, 2));
                     
                 } catch (error) {
                     console.error('Contract call failed:', error)

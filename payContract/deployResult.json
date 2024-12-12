@@ -1,5 +1,5 @@
 {
-  "contractId": "87ae0ae7e2b5968c788e5e7216c00de0b5e0b709c8bbe8ae51264e6f27f37870",
+  "contractId": "29d3122610df630f82e4620e21cb899221f7aa31b5e86d2f68388c041ad3b452",
   "state": [
     {
       "timestamp": "1732128366",
@@ -47,54 +47,6 @@
     },
     {
       "timestamp": "1732128586",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128606",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128626",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128646",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128666",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128686",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128706",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128726",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128746",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128766",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128786",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128806",
-      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
-    },
-    {
-      "timestamp": "1732128826",
       "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
     }
   ],
