@@ -5,25 +5,6 @@ const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utiliti
 
 
 const contractDir = path.resolve(__dirname, './payContract');
-
-async function cleanResultFile(resultFilePath, result) {
-    try {
-        // Borrar el archivo si existe
-        await fs.unlink(resultFilePath).catch(err => {
-            // Si el archivo no existe, ignorar el error
-            if (err.code !== 'ENOENT') {
-                throw err; // Lanzar el error si es otro tipo de error
-            }
-        });
-        // Crear (o sobrescribir) el archivo
-        await fs.writeFile(resultFilePath, JSON.stringify(result, null, 2));
-        console.log('Archivo creado o sobrescrito exitosamente.');
-
-    } catch (error) {
-        console.error('Error al limpiar y crear el archivo:', error);
-    }
-}
-
 const deployFileName = `deploy.ts`;
 const deployPath = path.resolve(contractDir, deployFileName);
 const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\\/g, '/');
@@ -31,7 +12,6 @@ const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
     try {
-        await cleanResultFile(resultFilePath, '');
         const deployCode = `
            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
@@ -82,18 +62,41 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
 
                 await contract.connect(signer)
 
-                const deployTx = await contract.deploy(1);
+                try {
+                    const deployTx = await contract.deploy(1);
 
-                const result = {
-                    contractId: deployTx.id,
-                    state: contract.dataPayments,
-                    addressOwner: realAddOwner,
-                    addressGN: realAddGN,
-                    paymentQuarks: contract.amountGN
-                };
+                    const result = {
+                        contractId: deployTx.id,
+                        state: contract.dataPayments,
+                        addressOwner: realAddOwner,
+                        addressGN: realAddGN,
+                        paymentQuarks: contract.amountGN
+                    };
+    
+                    //console.log(result);
+                    await cleanResultFile('${resultFilePath}', result)
+                    //await fs.writeFile('${resultFilePath}', JSON.stringify(result, null, 2));
+                }
+                catch (error) {
+                    if (error.message.includes('txn-mempool-conflict')) {
+                        console.log('Mempool conflict detected. Retrying after 5 seconds...');
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+                        //return main(qtyT, l, fIn, ownerPub, ownerGN, quarks); // Intenta desplegar nuevamente
+                        const deployTx = await contract.deploy(1);
 
-                //console.log(result);
-                await fs.writeFile(${resultFilePath}, JSON.stringify(result, null, 2));
+                        const result = {
+                            contractId: deployTx.id,
+                            state: contract.dataPayments,
+                            addressOwner: realAddOwner,
+                            addressGN: realAddGN,
+                            paymentQuarks: contract.amountGN
+                        };
+        
+                        await cleanResultFile('${resultFilePath}', result)
+                    } else {
+                        console.error('Error during deployment:', error);
+                    }
+                }
             }
 
             async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
@@ -110,6 +113,31 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                 //console.log('fechas después de: ', fechas);
 
                 return fechas;
+            }
+
+             async function cleanResultFile(resultFilePath: string, result: Record<string, unknown>): Promise<void> {
+                try {
+                    // Validar si el resultado ya es un JSON válido
+                    if (typeof result !== 'object' || result === null) {
+                        throw new Error('El resultado proporcionado no es un objeto JSON válido.');
+                    }
+
+                     // Borrar el archivo si existe
+                     await fs.unlink(resultFilePath).catch(err => {
+                        // Si el archivo no existe, ignorar el error
+                        if (err.code !== 'ENOENT') {
+                            throw err; // Lanzar el error si es otro tipo de error
+                        }
+                    });
+            
+                    // Reescribir el archivo con JSON formateado
+                    const formattedResult = JSON.stringify(result, null, 2);
+                    fs.writeFile(resultFilePath, formattedResult, 'utf-8');
+            
+                    console.log('Archivo de resultados limpiado y guardado en: ' + resultFilePath);
+                } catch (error) {
+                    console.error('Error al limpiar el archivo de resultados: ' + error.message);
+                }
             }
 
             main(${qtyT}, ${lapse}, ${startDate}, "${ownerPubKey}", "${ownerGNKey}", ${quarks}).catch(console.error);

@@ -172,13 +172,38 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                     console.log('Contract unlocked, transaction ID:', unlockTx.id);
                     console.log('State: ' + JSON.stringify(nextInstance.dataPayments))
                     console.log('We will pay ' + nextInstance.amountGN + ' quarks to quarksownerGN: ' + JSON.stringify(nextInstance.addressGN) )
-                    await fs.writeFile(${resultFilePath}, JSON.stringify(result, null, 2));
+                    await cleanResultFile('${resultFilePath}', result);
                     
                 } catch (error) {
                     console.error('Contract call failed:', error)
                 }
 
 
+            }
+
+            async function cleanResultFile(resultFilePath: string, result: Record<string, unknown>): Promise<void> {
+                try {
+                    // Validar si el resultado ya es un JSON válido
+                    if (typeof result !== 'object' || result === null) {
+                        throw new Error('El resultado proporcionado no es un objeto JSON válido.');
+                    }
+
+                     // Borrar el archivo si existe
+                     await fs.unlink(resultFilePath).catch(err => {
+                        // Si el archivo no existe, ignorar el error
+                        if (err.code !== 'ENOENT') {
+                            throw err; // Lanzar el error si es otro tipo de error
+                        }
+                    });
+            
+                    // Reescribir el archivo con JSON formateado
+                    const formattedResult = JSON.stringify(result, null, 2);
+                    fs.writeFile(resultFilePath, formattedResult, 'utf-8');
+            
+                    console.log('Archivo de resultados limpiado y guardado en: ' + resultFilePath);
+                } catch (error) {
+                    console.error('Error al limpiar el archivo de resultados: ' + error.message);
+                }
             }
 
             main("${lastStateTxid}").catch(console.error);

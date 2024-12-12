@@ -59,7 +59,8 @@
                     };
     
                     //console.log(result);
-                    await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
+                    await cleanResultFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', result)
+                    //await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
                 }
                 catch (error) {
                     if (error.message.includes('txn-mempool-conflict')) {
@@ -76,8 +77,7 @@
                             paymentQuarks: contract.amountGN
                         };
         
-                        //console.log(result);
-                        await fs.writeFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', JSON.stringify(result, null, 2));
+                        await cleanResultFile('C:/Users/Boris Javier/Documents/Javier/BTCFACILCOLOMBIA.com/runonbitcoin/run-0.6.5-alpha/SmartContracts/payContract/deployResult.json', result)
                     } else {
                         console.error('Error during deployment:', error);
                     }
@@ -99,6 +99,31 @@
                 //console.log('fechas después de: ', fechas);
 
                 return fechas;
+            }
+
+            async function cleanResultFile(resultFilePath: string, result: Record<string, unknown>): Promise<void> {
+                try {
+                    // Validar si el resultado ya es un JSON válido
+                    if (typeof result !== 'object' || result === null) {
+                        throw new Error('El resultado proporcionado no es un objeto JSON válido.');
+                    }
+
+                     // Borrar el archivo si existe
+                     await fs.unlink(resultFilePath).catch(err => {
+                        // Si el archivo no existe, ignorar el error
+                        if (err.code !== 'ENOENT') {
+                            throw err; // Lanzar el error si es otro tipo de error
+                        }
+                    });
+            
+                    // Reescribir el archivo con JSON formateado
+                    const formattedResult = JSON.stringify(result, null, 2);
+                    fs.writeFile(resultFilePath, formattedResult, 'utf-8');
+            
+                    console.log(`Archivo de resultados limpiado y guardado en: ${resultFilePath}`);
+                } catch (error) {
+                    console.error(`Error al limpiar el archivo de resultados: ${error.message}`);
+                }
             }
             //(qtyT, l, fIn, ownerPub, ownerGN, quarks)//pub Alice, GNAddress: Punto (14HGSX9cmRvBnuJPd77KT1m2V1LqBnKbcz),
             main(1, 20, 1732128366, "032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee", "02b9acb0186ac12383aad6acddd48644c90d1e32cc7c352b4652a6d091412cffef", 1000).catch(console.error);
