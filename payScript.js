@@ -7,25 +7,6 @@ const mutex = new Mutex();
 
 
 const contractDir = path.resolve(__dirname, './payContract');
-
-async function cleanResultFile(resultFilePath, result) {
-    try {
-        // Borrar el archivo si existe
-        await fs.unlink(resultFilePath).catch(err => {
-            // Si el archivo no existe, ignorar el error
-            if (err.code !== 'ENOENT') {
-                throw err; // Lanzar el error si es otro tipo de error
-            }
-        });
-        // Crear (o sobrescribir) el archivo
-        await fs.writeFile(resultFilePath, JSON.stringify(result, null, 2));
-        console.log('Archivo creado o sobrescrito exitosamente.');
-
-    } catch (error) {
-        console.error('Error al limpiar y crear el archivo:', error);
-    }
-}
-
 const deployFileName = `payScript.ts`;
 const deployPath = path.resolve(contractDir, deployFileName);
 const resultFilePath = path.resolve(contractDir, 'payResult.json').replace(/\\/g, '/');
@@ -35,7 +16,6 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
         const formattedTxids = JSON.stringify(txids);
         const bigNumberQtyTokens = `${qtyT}n`;
-        await cleanResultFile(resultFilePath, '');
 
         const deployCode = `
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';
@@ -175,7 +155,47 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                     await cleanResultFile('${resultFilePath}', result);
                     
                 } catch (error) {
-                    console.error('Contract call failed:', error)
+                    if (error.message.includes('txn-mempool-conflict')) {
+                        console.log('Mempool conflict detected. Retrying after 5 seconds...');
+                        const nextInstance = instance.next();
+                        nextInstance.owner = owner;
+                        nextInstance.dataPayments = dataPayments;
+                        nextInstance.qtyTokens = qtyTokens;
+                        nextInstance.isValid = isValid;
+                        const callContract = async () => instance.methods.pay(
+                            // findSigs filtra las firmas relevantes
+                            (sigResp) => findSig(sigResp, publicKey),
+                            pubKey,
+                            currentDate,
+                            txIdPago,
+                            {
+                                next: {
+                                    instance: nextInstance,
+                                    balance: 1,
+                                },
+
+                                pubKeyOrAddrToSign: publicKey,
+                            } as MethodCallOptions<PaymentContract>
+                        );
+                    
+                        const { tx: unlockTx } = await callContract();
+                        
+                        const result = {
+                        lastStateTxid: unlockTx.id,
+                        state: nextInstance.dataPayments,
+                        addressGN: nextInstance.addressGN,
+                        amountGN: nextInstance.amountGN,
+                        isValid: nextInstance.isValid
+                        };
+                        
+                        console.log('Contract unlocked, transaction ID:', unlockTx.id);
+                        console.log('State: ' + JSON.stringify(nextInstance.dataPayments))
+                        console.log('We will pay ' + nextInstance.amountGN + ' quarks to quarksownerGN: ' + JSON.stringify(nextInstance.addressGN) )
+                        await cleanResultFile('${resultFilePath}', result);
+                    } else {
+                        console.error('Contract call for payment failed:', error)
+                    }
+
                 }
 
 
