@@ -118,7 +118,7 @@
             
                     // Reescribir el archivo con JSON formateado
                     const formattedResult = JSON.stringify(result, null, 2);
-                    fs.writeFile(resultFilePath, formattedResult, 'utf-8');
+                    await fs.writeFile(resultFilePath, formattedResult, 'utf-8');
             
                     console.log(`Archivo de resultados limpiado y guardado en: ${resultFilePath}`);
                 } catch (error) {

@@ -81,7 +81,6 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                     if (error.message.includes('txn-mempool-conflict')) {
                         console.log('Mempool conflict detected. Retrying after 5 seconds...');
                         await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
-                        //return main(qtyT, l, fIn, ownerPub, ownerGN, quarks); // Intenta desplegar nuevamente
                         const deployTx = await contract.deploy(1);
 
                         const result = {
@@ -132,7 +131,7 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
             
                     // Reescribir el archivo con JSON formateado
                     const formattedResult = JSON.stringify(result, null, 2);
-                    fs.writeFile(resultFilePath, formattedResult, 'utf-8');
+                    await fs.writeFile(resultFilePath, formattedResult, 'utf-8');
             
                     console.log('Archivo de resultados limpiado y guardado en: ' + resultFilePath);
                 } catch (error) {
@@ -144,6 +143,14 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
 
         `;  //qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks
     
+        try {
+            await fs.unlink(deployPath);
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                throw error;
+            }
+        }
+        
         const fileHandle = await fs.open(deployPath, 'w');
         await fileHandle.write(deployCode);
         await fileHandle.close();
