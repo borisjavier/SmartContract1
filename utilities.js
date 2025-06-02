@@ -13,8 +13,8 @@ admin.initializeApp({
 const bucket = admin.storage().bucket();
 
 //Ruta al json para determinar size de lo que tenemos
-const contractPath = path.join(__dirname, 'contractDir/artifacts/paycontract.json');
-const cacheDir = path.resolve(__dirname, './cache'); 
+//const contractPath = path.join(__dirname, 'artifacts/paycontract.json');
+//const cacheDir = path.resolve(__dirname, './cache'); 
 const contractDir = path.resolve(__dirname, './payContract');
 const artifactsDir = path.resolve(contractDir, './artifacts');
 
@@ -213,7 +213,8 @@ async function checkCache(size) {
         console.log(`Valor de N detectado: ${nValue}`);
             try {
             // Leer el archivo JSON usando fs.promises
-            const data = await fs.readFile(contractPath, 'utf8');
+            const dataPath = path.resolve(contractDir, 'artifacts', 'paycontract.json');
+            const data = await fs.readFile(dataPath, 'utf8');
 
             // Parsear el archivo JSON
             const contractJson = JSON.parse(data);
