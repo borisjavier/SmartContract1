@@ -1,5 +1,5 @@
 
-           import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
+            import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
             import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
             import { adminPublicKey } from './config';
             import { promises as fs } from 'fs';
@@ -126,6 +126,6 @@
                 }
             }
             //(qtyT, l, fIn, ownerPub, ownerGN, quarks)//pub Alice, GNAddress: Punto (14HGSX9cmRvBnuJPd77KT1m2V1LqBnKbcz),
-            main(1, 20, 1732128366, "032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee", "02b9acb0186ac12383aad6acddd48644c90d1e32cc7c352b4652a6d091412cffef", 1000).catch(console.error);
+            main(1, 100, 1732128366, "032adc904bbcba519b348b0c42ba2467002a793f1332cec64e8bf17e74ede035ee", "02b9acb0186ac12383aad6acddd48644c90d1e32cc7c352b4652a6d091412cffef", 1000).catch(console.error);
 
         

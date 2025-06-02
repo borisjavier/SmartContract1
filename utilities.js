@@ -73,7 +73,7 @@ async function downloadFile(fileName, destinationPath) {
 
 async function checkCache(size) {
     const cacheFolder = `sCrypt cache/paycontract_${size}`;
-    const expectedFiles = ['paycontract.json', 'paycontract.scrypt', 'paycontract.scrypt.map', 'paycontract.transformer.json'];
+    const expectedFiles = ['paycontract.json', 'paycontract.scrypt', 'paycontract.scrypt.map', 'paycontract.transformer.json', 'paycontract.ts'];
 
     try {
         // Listar archivos en el directorio de Firebase Storage
@@ -166,6 +166,7 @@ async function checkCache(size) {
     const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
 
     try {
+        //Crear el archivo correcto paycontract.ts
         // Limpiar el directorio 'artifacts' local
         await fs.rm(artifactsDirPath, { recursive: true, force: true });
         console.log(`Directorio ${artifactsDirPath} limpiado.`);
@@ -197,40 +198,64 @@ async function checkCache(size) {
 
   async function getDataPaymentsSize() {
     try {
-        // Leer el archivo JSON usando fs.promises
-        const data = await fs.readFile(contractPath, 'utf8');
+        // 1. Leer el archivo TS del contrato
+        const tsPath = path.resolve(contractDir, 'src', 'contracts', 'paycontract.ts');
+        const tsCode = await fs.readFile(tsPath, 'utf8');
 
-        // Parsear el archivo JSON
-        const contractJson = JSON.parse(data);
+        // 2. Buscar la línea que define N
+        const nMatch = tsCode.match(/export\s+const\s+N\s*=\s*(\d+)/);
 
-        // Encontrar la propiedad "dataPayments" en stateProps
-        const dataPaymentProp = contractJson.stateProps.find(
-            function(prop) {
-                return prop.name === 'dataPayments';
-            }
-        );
-
-        if (dataPaymentProp) {
-            // Extraer el tipo de la propiedad (en este caso, "Payment[5]")
-            const type = dataPaymentProp.type;
-            
-            // Usar una expresión regular para encontrar el tamaño dentro de los corchetes []
-            const match = type.match(/\[(\d+)\]/);
-
-            if (match && match[1]) {
-                const size = parseInt(match[1], 10);
-                console.log(`El tamaño de 'dataPayments' es: ${size}`);
-                return size;
-            } else {
-                console.log('No se encontró el tamaño en el tipo de la propiedad dataPayments.');
-                return null;
-            }
-        } else {
-            console.log('No se encontró la propiedad "dataPayments" en stateProps.');
-            return null;
+        if (!nMatch) {
+            throw new Error("No se encontró la constante N en el contrato");
         }
+
+        const nValue = parseInt(nMatch[1], 10);
+        console.log(`Valor de N detectado: ${nValue}`);
+            try {
+            // Leer el archivo JSON usando fs.promises
+            const data = await fs.readFile(contractPath, 'utf8');
+
+            // Parsear el archivo JSON
+            const contractJson = JSON.parse(data);
+
+            // Encontrar la propiedad "dataPayments" en stateProps
+            /*const dataPaymentProp = contractJson.stateProps.find(
+                function(prop) {
+                    return prop.name === 'dataPayments';
+                }
+            );*/
+            const dataPaymentProp = contractJson.stateProps.find(prop => prop.name === 'dataPayments');
+
+            if (dataPaymentProp) {
+                // Extraer el tipo de la propiedad (en este caso, "Payment[5]")
+                //const type = dataPaymentProp.type;
+                
+                // Usar una expresión regular para encontrar el tamaño dentro de los corchetes []
+                /*const match = type.match(/\[(\d+)\]/);
+
+                if (match && match[1]) {
+                    const size = parseInt(match[1], 10);
+                    console.log(`El tamaño de 'dataPayments' es: ${size}`);
+                    return size;*/
+                   
+                //} else {
+                    /*console.log('No se encontró el tamaño en el tipo de la propiedad dataPayments.');
+                    return null;
+                }*/
+                const jsonSizeMatch = dataPaymentProp.type.match(/\[(\d+)\]/);
+                    if (jsonSizeMatch && parseInt(jsonSizeMatch[1], 10) !== nValue) {
+                        console.warn("⚠️ Advertencia: El tamaño en el JSON no coincide con N");
+                    }
+            } /*else {
+                console.log('No se encontró la propiedad "dataPayments" en stateProps.');
+                return null;
+            }*/
+        } catch (err) {
+            console.warn("No se pudo verificar el JSON:", jsonError.message);
+        }
+        return nValue;
     } catch (err) {
-        console.error('Error al leer o procesar el archivo JSON:', err);
+        console.error('Error al leer el contrato:', err);
         return null;
     }
 }

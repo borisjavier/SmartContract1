@@ -1,9 +1,13 @@
 
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';
-            import { bsv, findSig, DefaultProvider, MethodCallOptions, PubKey, Addr, fill, toByteString, FixedArray, ByteString, TestWallet } from 'scrypt-ts';
-            import { promises as fs } from 'fs';
+            import { bsv, PubKey, Addr, fill, toByteString, FixedArray, ByteString } from 'scrypt-ts';
+            //import { promises as fs } from 'fs';
             import * as dotenv from 'dotenv'
-
+            /*
+             * findSig,
+             * MethodCallOptions, 
+             * , DefaultProvider, TestWallet
+             */
                         // Cargar el archivo .env
                         dotenv.config()
 
@@ -12,14 +16,14 @@
                         }
 
             const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
-            const provider = new DefaultProvider({
+            /*const provider = new DefaultProvider({
                 network: bsv.Networks.mainnet,
             });
 
             const signer = new TestWallet(
                 privateKey,
                 provider
-            )
+            )*/
 
             function filledTxids(dataPayments, tx0) {
                 const n = dataPayments.length;
@@ -40,10 +44,12 @@
             async function main(txId: string, atOutputIndex = 0) {
                 // Clave privada del admin
                 const pubKey = PubKey(privateKey.publicKey.toHex());
-                const publicKey = privateKey.publicKey;
+                console.log(`pubKey: ${pubKey} en txid output ${atOutputIndex}`)
+                //const publicKey = privateKey.publicKey;
 
                 const ownerPubKey = bsv.PublicKey.fromHex('0316480d9da880ec435d42a1f6428a00d27d738eb2bbf0ae7c2da94561af209225');//Alice's Pubkey
                 const owner = Addr(ownerPubKey.toAddress().toByteString());
+                console.log(`owner: ${owner}`)
                 const currentDate: bigint = BigInt(Math.floor(Date.now() / 1000));
                 const tx0 = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
                 //
@@ -52,15 +58,15 @@
                 await PaymentContract.loadArtifact()
 
                 
-                const txResponse = await provider.getTransaction(txId);
+                //const txResponse = await provider.getTransaction(txId);
                 
-                const instance = PaymentContract.fromTx(txResponse, atOutputIndex)
-                await instance.connect(signer); //getDefaultSigner(privateKey)
+                //const instance = PaymentContract.fromTx(txResponse, atOutputIndex)
+                //await instance.connect(signer); //getDefaultSigner(privateKey)
                 
-                const datas: FixedArray<Timestamp, typeof N> = [1732821319n, 1732827408n, 1732834608n, 1732841808n, 1732849008n, 1732856208n, 1732863408n, 1732870608n, 1732877808n, 1732885008n, 1732892208n, 1732899408n]
+                const datas: FixedArray<Timestamp, typeof N> = [1732128366n, 1732128386n, 1732128406n, 1732128426n, 1732128446n, 1732128466n, 1732128486n, 1732128506n, 1732128526n, 1732128546n, 1732128566n, 1732128586n]
             
                 //console.log('datas: ', datas)
-                const txids: FixedArray<ByteString, typeof N> = ["ac7306aacd668d697c12d4f833b5e343a08d20540ba4f48e1d36177fd80330da",
+                const txids: FixedArray<ByteString, typeof N> = ["501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
                     "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836",
@@ -108,8 +114,8 @@
                 console.log('dataPayments desde call.ts: ', dataPayments);
                 console.log('isValid: ', isValid); // Imprimir el estado final de isValid
                 const qtyTokens: bigint = 1n
-                
-                try {
+                console.log('qtyTokens: ',qtyTokens);
+                /*try {
                     const nextInstance = instance.next();
                     nextInstance.owner = owner;
                     nextInstance.dataPayments = dataPayments;
@@ -148,11 +154,11 @@
                     
                 } catch (error) {
                     console.error('Contract call failed:', error)
-                }
+                }*/
 
 
             }
 
-            main("f371ddf520942dd16d0d6b93ca548b555aead634b870f4f5e0ee56f87a6bc36c").catch(console.error);
+            main("efaacbcaa8daa4a6a7fa8b2bb91a7cb6ce732fcdd351e0596968891e299f46a7").catch(console.error);
 
         
