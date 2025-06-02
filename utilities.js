@@ -166,29 +166,34 @@ async function checkCache(size) {
     const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
 
     try {
-        //Crear el archivo correcto paycontract.ts
-        // Limpiar el directorio 'artifacts' local
-        await fs.rm(artifactsDirPath, { recursive: true, force: true });
-        console.log(`Directorio ${artifactsDirPath} limpiado.`);
-        await fs.mkdir(artifactsDirPath, { recursive: true });
+        // 1. Limpiar SOLO los artifacts del contrato actual en artifactsDir
+        for (const file of artifacts) {
+            const filePath = path.resolve(artifactsDirPath, file);
+            if (await fileExists(filePath)) {
+                await fs.unlink(filePath);
+                console.log(`Eliminado artifact: ${filePath}`);
+            }
+        }
 
-        // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
+        // 2. Descargar artifacts desde Firebase
         for (const file of artifacts) {
             const srcPath = `${cacheFolder}/${file}`;
             const destPath = path.resolve(artifactsDirPath, file);
             await downloadFile(srcPath, destPath);
         }
 
-        // Limpiar y preparar el directorio 'src/contracts'
-        await fs.rm(contractDirPath, { recursive: true, force: true });
-        console.log(`El Directorio ${contractDirPath} fue limpiado.`);
-        await fs.mkdir(contractDirPath, { recursive: true });
-
-        // Restaurar 'paycontract.ts' desde Firebase a 'src/contracts'
+        // 3. Limpiar SOLO el contrato fuente en src/contracts
         const contractFile = 'paycontract.ts';
+        const contractPath = path.resolve(contractDirPath, contractFile);
+        
+        if (await fileExists(contractPath)) {
+            await fs.unlink(contractPath);
+            console.log(`Eliminado contrato fuente: ${contractPath}`);
+        }
+
+        // 4. Descargar el contrato fuente
         const contractSrcPath = `${cacheFolder}/${contractFile}`;
-        const contractDestPath = path.resolve(contractDirPath, contractFile);
-        await downloadFile(contractSrcPath, contractDestPath);
+        await downloadFile(contractSrcPath, contractPath);
 
     } catch (error) {
         console.error(`Error al restaurar los artifacts para size ${size}: ${error.message}`);
