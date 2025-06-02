@@ -251,7 +251,8 @@ async function checkCache(size) {
                 return null;
             }*/
         } catch (err) {
-            console.warn("No se pudo verificar el JSON:", jsonError.message);
+            console.error("No se pudo verificar el JSON:", err);
+            return null;
         }
         return nValue;
     } catch (err) {
