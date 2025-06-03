@@ -13,7 +13,7 @@ admin.initializeApp({
 const bucket = admin.storage().bucket();
 
 //Ruta al json para determinar size de lo que tenemos
-const contractPath = path.join(__dirname, 'artifacts/paycontract.json');
+const contractPath = path.join(__dirname, './payContract/artifacts/paycontract.json');
 const cacheDir = path.resolve(__dirname, './cache'); 
 const contractDir = path.resolve(__dirname, './payContract');
 const artifactsDir = path.resolve(contractDir, './artifacts');
