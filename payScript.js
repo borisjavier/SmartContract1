@@ -259,11 +259,14 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
 
         try {
             // Comprobar si el archivo existe
-            await fs.access(resultFilePath);           
+            /*await fs.access(resultFilePath);           
             const resultData = await fs.readFile(resultFilePath, 'utf8');
             console.log(`resultData: ${resultData}`)
             const result = JSON.parse(resultData);
-            return result;  // Retornar el resultado para su uso posterior 
+            return result;*/  // Retornar el resultado para su uso posterior 
+            const result = await waitForFileContent(resultFilePath, 20, 1000); // 20 intentos, 1s entre intentos
+            console.log(`Resultado obtenido:`, result);
+            return result;
         } catch (error) {
             if (error.code === 'ENOENT') {
                 console.error('El archivo no existe:', resultFilePath);
@@ -344,5 +347,32 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         }
     }
     
+
+    async function waitForFileContent(filePath, maxAttempts = 20, interval = 1000) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            await fs.access(filePath);
+            const content = await fs.readFile(filePath, 'utf8');
+            
+            if (content.trim().length > 0) {
+                try {
+                    return JSON.parse(content);
+                } catch (parseError) {
+                    if (attempt === maxAttempts) {
+                        throw new Error(`Archivo corrupto después de ${maxAttempts} intentos: ${parseError.message}`);
+                    }
+                }
+            }
+        } catch (accessError) {
+            if (attempt === maxAttempts) {
+                throw new Error(`Archivo no encontrado después de ${maxAttempts} intentos`);
+            }
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, interval));
+        console.log(`Intento ${attempt}: Esperando contenido válido...`);
+    }
+    throw new Error(`No se pudo obtener contenido válido después de ${maxAttempts} intentos`);
+}
 
 module.exports = runPay;   
