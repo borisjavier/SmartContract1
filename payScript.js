@@ -283,7 +283,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         try {
             const { tsSize, jsonSize, source } = await getDataPaymentsSize();
             console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
-            if (tsSize !== size || (jsonSize && jsonSize !== size)) {
+            if (tsSize !== size || jsonSize == null)  {
                 console.log(`Se requiere cambio de tamaño para payScript de ${tsSize} a (${size})`);
                 const isCached = await checkCache(size);
                 if (!isCached) {
