@@ -13,8 +13,8 @@ admin.initializeApp({
 const bucket = admin.storage().bucket();
 
 //Ruta al json para determinar size de lo que tenemos
-//const contractPath = path.join(__dirname, 'artifacts/paycontract.json');
-//const cacheDir = path.resolve(__dirname, './cache'); 
+const contractPath = path.join(__dirname, 'artifacts/paycontract.json');
+const cacheDir = path.resolve(__dirname, './cache'); 
 const contractDir = path.resolve(__dirname, './payContract');
 const artifactsDir = path.resolve(contractDir, './artifacts');
 
@@ -166,34 +166,29 @@ async function checkCache(size) {
     const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
 
     try {
-        // 1. Limpiar SOLO los artifacts del contrato actual en artifactsDir
-        for (const file of artifacts) {
-            const filePath = path.resolve(artifactsDirPath, file);
-            if (await fileExists(filePath)) {
-                await fs.unlink(filePath);
-                console.log(`Eliminado artifact: ${filePath}`);
-            }
-        }
+        //Crear el archivo correcto paycontract.ts
+        // Limpiar el directorio 'artifacts' local
+        await fs.rm(artifactsDirPath, { recursive: true, force: true });
+        console.log(`Directorio ${artifactsDirPath} limpiado.`);
+        await fs.mkdir(artifactsDirPath, { recursive: true });
 
-        // 2. Descargar artifacts desde Firebase
+        // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
         for (const file of artifacts) {
             const srcPath = `${cacheFolder}/${file}`;
             const destPath = path.resolve(artifactsDirPath, file);
             await downloadFile(srcPath, destPath);
         }
 
-        // 3. Limpiar SOLO el contrato fuente en src/contracts
-        const contractFile = 'paycontract.ts';
-        const contractPath = path.resolve(contractDirPath, contractFile);
-        
-        if (await fileExists(contractPath)) {
-            await fs.unlink(contractPath);
-            console.log(`Eliminado contrato fuente: ${contractPath}`);
-        }
+        // Limpiar y preparar el directorio 'src/contracts'
+        await fs.rm(contractDirPath, { recursive: true, force: true });
+        console.log(`El Directorio ${contractDirPath} fue limpiado.`);
+        await fs.mkdir(contractDirPath, { recursive: true });
 
-        // 4. Descargar el contrato fuente
+        // Restaurar 'paycontract.ts' desde Firebase a 'src/contracts'
+        const contractFile = 'paycontract.ts';
         const contractSrcPath = `${cacheFolder}/${contractFile}`;
-        await downloadFile(contractSrcPath, contractPath);
+        const contractDestPath = path.resolve(contractDirPath, contractFile);
+        await downloadFile(contractSrcPath, contractDestPath);
 
     } catch (error) {
         console.error(`Error al restaurar los artifacts para size ${size}: ${error.message}`);
@@ -218,8 +213,8 @@ async function checkCache(size) {
         console.log(`Valor de N detectado: ${nValue}`);
             try {
             // Leer el archivo JSON usando fs.promises
-            const dataPath = path.resolve(contractDir, 'artifacts', 'paycontract.json');
-            const data = await fs.readFile(dataPath, 'utf8');
+            //const dataPath = path.resolve(contractDir, 'artifacts', 'paycontract.ts');
+            const data = await fs.readFile(contractPath, 'utf8');
 
             // Parsear el archivo JSON
             const contractJson = JSON.parse(data);
