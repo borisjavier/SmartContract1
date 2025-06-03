@@ -238,8 +238,7 @@ async function checkCache(size) {
                     }
             } 
         } catch (err) {
-            console.error("No se pudo verificar el JSON:", err);
-            return null;
+            console.warn("⚠️ No se pudo verificar el JSON:", err.message);
         }
 
          // 4. Verificar consistencia
@@ -252,7 +251,7 @@ async function checkCache(size) {
             source: jsonSize !== null ? "both" : "ts-only"
         };
     } catch (err) {
-        console.error("Error en getDataPaymentsSize:", err.message);
+        console.error("❌ Error grave en getDataPaymentsSize:", err.message);
         return {
             tsSize: null,
             jsonSize: null,
