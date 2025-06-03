@@ -281,19 +281,37 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
 
       async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
         try {
-            const sizePresent = await getDataPaymentsSize();
-            
-            if (sizePresent !== size || sizePresent == null) {
+            const { tsSize, jsonSize, source } = await getDataPaymentsSize();
+            console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
+            if (tsSize !== size || (jsonSize && jsonSize !== size)) {
+                console.log(`Se requiere cambio de tamaño para payScript de ${tsSize} a (${size})`);
                 const isCached = await checkCache(size);
-                
-                if (isCached) {
+                if (!isCached) {
+                throw new Error(`No hay caché para tamaño ${size}`);
+                }
+                console.log(`Restaurando artifacts para payScript. Tamaño: ${size}...`);
+                await restoreArtifacts(size);
+                // 3. Validación estricta post-restauración
+                const newSizes = await getDataPaymentsSize();
+                if (newSizes.tsSize !== size) {
+                    throw new Error(
+                        `Error crítico: Tamaño en TS (${newSizes.tsSize}) no coincide con ${size}`
+                    );
+                }
+
+                if (newSizes.jsonSize && newSizes.jsonSize !== size) {
+                    throw new Error(
+                        `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
+                    );
+                }
+                /*if (isCached) {
                     console.log(`Usando artifacts en caché para size ${size}.`);
                     // Si la caché existe, restaurar los artifacts y el código fuente
                     await restoreArtifacts(size);  // Restaurar los artifacts a la carpeta `artifacts`
                 } else {
                     // Si no hay caché, se lanza un error
                     throw new Error(`No artifacts found for contract of size ${size}`);
-                }
+                }*/
             }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
@@ -303,7 +321,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             return result;
     
         } catch (error) {
-            throw new Error(`Error en el proceso: ${error.message}`);
+            throw new Error(`Error en payScript [Runservice]: ${error.message}`);
         }
     }
     

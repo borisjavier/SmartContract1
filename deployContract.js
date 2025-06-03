@@ -193,24 +193,48 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
 
           async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
             try {
-                const sizePresent = await getDataPaymentsSize();
-                console.log('Size present is: ', sizePresent)
+                const { tsSize, jsonSize, source } = await getDataPaymentsSize();
+                 console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
                 // Verificar si el tamaño actual es diferente del solicitado o si no hay datos almacenados
-                if (sizePresent !== size || sizePresent == null) {
+                if (tsSize !== size || (jsonSize && jsonSize !== size)) {
+                    console.log(`Se requiere cambio de tamaño (${size})`);
                     const isCached = await checkCache(size);
-                    
-                    if (isCached) {
+                    if (!isCached) {
+                        throw new Error(`No hay caché para tamaño ${size}`);
+                    }
+                    console.log(`Restaurando artifacts desde caché para size ${size}.`);
+                    await restoreArtifacts(size);
+
+                    // 3. Validación estricta post-restauración
+                    const newSizes = await getDataPaymentsSize();
+                    if (newSizes.tsSize !== size) {
+                        throw new Error(
+                            `Error crítico: Tamaño en TS (${newSizes.tsSize}) no coincide con ${size}`
+                        );
+                    }
+
+                    if (newSizes.jsonSize && newSizes.jsonSize !== size) {
+                        throw new Error(
+                            `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
+                        );
+                    }
+                    /*if (isCached) {
                         console.log(`Usando artifacts en caché para size ${size}.`);
                         // Si la caché existe, restaurar los artifacts y el código fuente
                         try {
                             await restoreArtifacts(size);
+                            const actualSize = await getDataPaymentsSize();
+                            if (size !== actualSize) {
+                                console.error(`Error: artifacts se necesitan para tamaño ${size}, pero después de instalarlos, tenemos ${actualSize} `);
+                                return null;
+                            }
                         } catch {
                             throw new Error('Artifacts were not restored.')
                         }
                     } else {
                         // Si no hay caché, lanzar un error
                         throw new Error(`No artifacts found for contract of size ${size}`);
-                    }
+                    }*/
                 }
         
                 // Llamar a `createDeploy` para realizar el despliegue del contrato
