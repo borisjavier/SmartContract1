@@ -31,14 +31,14 @@ COPY ./payContract/tests ./tests
 
 # --- ESCROWCONTRACT ---
 # Cambiar al directorio escrowContract
-WORKDIR /usr/src/app/escrowContract
+# WORKDIR /usr/src/app/escrowContract
 # Copiar dependencias específicas de escrowContract
-COPY ./escrowContract/package*.json ./
+# COPY ./escrowContract/package*.json ./
 # Instalar dependencias
-RUN npm install
+# RUN npm install
 # Copiar código fuente y tests
-COPY ./escrowContract/src ./src
-COPY ./escrowContract/tests ./tests
+# COPY ./escrowContract/src ./src
+# COPY ./escrowContract/tests ./tests
 
 # Volver al directorio raíz
 WORKDIR /usr/src/app
