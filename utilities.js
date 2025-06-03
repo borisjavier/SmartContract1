@@ -220,7 +220,7 @@ async function checkCache(size) {
             const jsonData = await fs.readFile(contractPath, 'utf8');
 
             // Parsear el archivo JSON
-            const contractJson = JSON.parse(jsonDataata);
+            const contractJson = JSON.parse(jsonData);
 
             // Encontrar la propiedad "dataPayments" en stateProps
             /*const dataPaymentProp = contractJson.stateProps.find(
