@@ -209,15 +209,18 @@ async function checkCache(size) {
             throw new Error("No se encontró la constante N en el contrato");
         }
 
-        const nValue = parseInt(nMatch[1], 10);
-        console.log(`Valor de N detectado: ${nValue}`);
+        const tsSize = parseInt(nMatch[1], 10);
+        console.log(`Valor de N detectado: ${tsSize}`);
+
+        // 3. Leer y parsear JSON compilado
+        let jsonSize = null;
             try {
             // Leer el archivo JSON usando fs.promises
             //const dataPath = path.resolve(contractDir, 'artifacts', 'paycontract.ts');
-            const data = await fs.readFile(contractPath, 'utf8');
+            const jsonData = await fs.readFile(contractPath, 'utf8');
 
             // Parsear el archivo JSON
-            const contractJson = JSON.parse(data);
+            const contractJson = JSON.parse(jsonDataata);
 
             // Encontrar la propiedad "dataPayments" en stateProps
             /*const dataPaymentProp = contractJson.stateProps.find(
@@ -228,37 +231,33 @@ async function checkCache(size) {
             const dataPaymentProp = contractJson.stateProps.find(prop => prop.name === 'dataPayments');
 
             if (dataPaymentProp) {
-                // Extraer el tipo de la propiedad (en este caso, "Payment[5]")
-                //const type = dataPaymentProp.type;
                 
-                // Usar una expresión regular para encontrar el tamaño dentro de los corchetes []
-                /*const match = type.match(/\[(\d+)\]/);
-
-                if (match && match[1]) {
-                    const size = parseInt(match[1], 10);
-                    console.log(`El tamaño de 'dataPayments' es: ${size}`);
-                    return size;*/
-                   
-                //} else {
-                    /*console.log('No se encontró el tamaño en el tipo de la propiedad dataPayments.');
-                    return null;
-                }*/
-                const jsonSizeMatch = dataPaymentProp.type.match(/\[(\d+)\]/);
-                    if (jsonSizeMatch && parseInt(jsonSizeMatch[1], 10) !== nValue) {
-                        console.warn("⚠️ Advertencia: El tamaño en el JSON no coincide con N");
+                const sizeMatch = dataPaymentProp.type.match(/\[(\d+)\]/);
+                    if (sizeMatch) {
+                        jsonSize = parseInt(sizeMatch[1], 10);
                     }
-            } /*else {
-                console.log('No se encontró la propiedad "dataPayments" en stateProps.');
-                return null;
-            }*/
+            } 
         } catch (err) {
             console.error("No se pudo verificar el JSON:", err);
             return null;
         }
-        return nValue;
+
+         // 4. Verificar consistencia
+        if (jsonSize !== null && tsSize !== jsonSize) {
+            console.error("⚠️ INCONSISTENCIA: TS Size:", tsSize, "JSON Size:", jsonSize);
+        }
+        return {
+            tsSize,
+            jsonSize,
+            source: jsonSize !== null ? "both" : "ts-only"
+        };
     } catch (err) {
-        console.error('Error al leer el contrato:', err);
-        return null;
+        console.error("Error en getDataPaymentsSize:", err.message);
+        return {
+            tsSize: null,
+            jsonSize: null,
+            source: "error"
+        };
     }
 }
 
