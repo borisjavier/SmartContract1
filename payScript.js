@@ -13,6 +13,7 @@ const resultFilePath = path.resolve(contractDir, 'payResult.json').replace(/\\/g
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
     try {
+        await cleanupPreviousFiles();
         const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
         const formattedTxids = JSON.stringify(txids);
         const bigNumberQtyTokens = `${qtyT}n`;
@@ -220,7 +221,9 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                     // Reescribir el archivo con JSON formateado
                     const formattedResult = JSON.stringify(result, null, 2);
                     await fs.writeFile(resultFilePath, formattedResult, 'utf-8');
-            
+                    //Señal de completado
+                    const doneFilePath = resultFilePath + '.done';
+                    await fs.writeFile(doneFilePath, 'COMPLETED', 'utf-8');
                     console.log('Archivo de resultados limpiado y guardado en: ' + resultFilePath);
                 } catch (error) {
                     console.error('Error al limpiar el archivo de resultados: ' + error.message);
@@ -258,14 +261,10 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         });
 
         try {
-            // Comprobar si el archivo existe
-            /*await fs.access(resultFilePath);           
+            await waitForCompletionSignal(resultFilePath, 30, 1000);       
+            // LEER ARCHIVO DE RESULTADOS
             const resultData = await fs.readFile(resultFilePath, 'utf8');
-            console.log(`resultData: ${resultData}`)
             const result = JSON.parse(resultData);
-            return result;*/  // Retornar el resultado para su uso posterior 
-            const result = await waitForFileContent(resultFilePath, 20, 1000); // 20 intentos, 1s entre intentos
-            console.log(`Resultado obtenido:`, result);
             return result;
         } catch (error) {
             if (error.code === 'ENOENT') {
@@ -307,14 +306,6 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                         `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
                     );
                 }
-                /*if (isCached) {
-                    console.log(`Usando artifacts en caché para size ${size}.`);
-                    // Si la caché existe, restaurar los artifacts y el código fuente
-                    await restoreArtifacts(size);  // Restaurar los artifacts a la carpeta `artifacts`
-                } else {
-                    // Si no hay caché, se lanza un error
-                    throw new Error(`No artifacts found for contract of size ${size}`);
-                }*/
             }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
@@ -346,33 +337,40 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             throw error;  // Propagamos el error para ser manejado en niveles superiores
         }
     }
-    
 
-    async function waitForFileContent(filePath, maxAttempts = 20, interval = 1000) {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+async function cleanupPreviousFiles() {
+    const filesToClean = [
+        resultFilePath,
+        resultFilePath + '.done',
+        deployPath
+    ];
+    
+    for (const file of filesToClean) {
         try {
-            await fs.access(filePath);
-            const content = await fs.readFile(filePath, 'utf8');
-            
-            if (content.trim().length > 0) {
-                try {
-                    return JSON.parse(content);
-                } catch (parseError) {
-                    if (attempt === maxAttempts) {
-                        throw new Error(`Archivo corrupto después de ${maxAttempts} intentos: ${parseError.message}`);
-                    }
-                }
-            }
-        } catch (accessError) {
-            if (attempt === maxAttempts) {
-                throw new Error(`Archivo no encontrado después de ${maxAttempts} intentos`);
+            await fs.unlink(file);
+            console.log(`Archivo limpiado: ${file}`);
+        } catch (err) {
+            if (err.code !== 'ENOENT') {
+                console.error(`Error limpiando ${file}:`, err.message);
             }
         }
-        
-        await new Promise(resolve => setTimeout(resolve, interval));
-        console.log(`Intento ${attempt}: Esperando contenido válido...`);
     }
-    throw new Error(`No se pudo obtener contenido válido después de ${maxAttempts} intentos`);
+}
+
+// Función para esperar la señal de completado
+async function waitForCompletionSignal(filePath, maxAttempts = 10, interval = 500) {
+    const signalFile = filePath + '.done';
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            await fs.access(signalFile);
+            console.log(`Señal de completado encontrada en intento ${attempt + 1}`);
+            return true;
+        } catch {
+            await new Promise(resolve => setTimeout(resolve, interval));
+            console.log(`Intento ${attempt + 1}: Esperando señal...`);
+        }
+    }
+    throw new Error(`Señal de completado no recibida después de ${maxAttempts} intentos`);
 }
 
 module.exports = runPay;   
