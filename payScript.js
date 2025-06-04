@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();
+const { executePayment } = require('./payContract/payContractLogic');
 
 
 const contractDir = path.resolve(__dirname, './payContract');
@@ -13,12 +14,24 @@ const resultFilePath = path.resolve(contractDir, 'payResult.json').replace(/\\/g
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
     try {
-        await cleanupPreviousFiles();
-        const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');
-        const formattedTxids = JSON.stringify(txids);
-        const bigNumberQtyTokens = `${qtyT}n`;
 
-        const deployCode = `
+        const bigIntArrayDatas = datas.map(num => `${num}n`).join(', ');//BigInt(num)
+        const formattedTxids = JSON.stringify(txids);
+        const bigNumberQtyTokens = `${qtyT}n`;//BigInt(qtyT)
+
+        const paymentData = {
+            lastStateTxid,
+            datas: bigIntArrayDatas,
+            txids: formattedTxids,
+            txidPago,
+            qtyT: bigNumberQtyTokens,
+            ownerPubKey
+        };
+
+        const result = await executePayment(paymentData);
+        console.log('Resultado del pago:', result);
+        return result;
+        /*const deployCode = `
             import { PaymentContract, Timestamp, Payment, N } from './src/contracts/paycontract';
             import { bsv, findSig, DefaultProvider, MethodCallOptions, PubKey, Addr, fill, toByteString, FixedArray, ByteString, TestWallet } from 'scrypt-ts';
             import { promises as fs } from 'fs';
@@ -232,9 +245,9 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
 
             main("${lastStateTxid}").catch(console.error);
 
-        `;  //qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks
+        `;*/  //qtyTokens, lapse, startDate, ownerPubKey, ownerGNKey, quarks
 
-        try {
+        /*try {
             await fs.unlink(deployPath);
         } catch (error) {
             if (error.code !== 'ENOENT') {
@@ -272,7 +285,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             } else {
                 console.error('Error al leer el archivo:', error);
             }
-        }
+        }*/
                
     } catch (error) {
         console.error(`Error en el proceso: ${error.message}`);
@@ -309,7 +322,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
-            console.log('Llamando payScript...');
+            console.log('Llamando payScript...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
             const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
             console.log('Pago registrado exitosamente.');
             return result;
@@ -338,7 +351,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         }
     }
 
-async function cleanupPreviousFiles() {
+/*async function cleanupPreviousFiles() {
     const filesToClean = [
         resultFilePath,
         resultFilePath + '.done',
@@ -355,10 +368,10 @@ async function cleanupPreviousFiles() {
             }
         }
     }
-}
+}*/
 
 // Función para esperar la señal de completado
-async function waitForCompletionSignal(filePath, maxAttempts = 10, interval = 500) {
+/*async function waitForCompletionSignal(filePath, maxAttempts = 10, interval = 500) {
     const signalFile = filePath + '.done';
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
@@ -371,6 +384,6 @@ async function waitForCompletionSignal(filePath, maxAttempts = 10, interval = 50
         }
     }
     throw new Error(`Señal de completado no recibida después de ${maxAttempts} intentos`);
-}
+}*/
 
 module.exports = runPay;   
