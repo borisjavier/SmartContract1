@@ -4,7 +4,7 @@ const fs = require('fs').promises;
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();
-const { executePayment } = require('./payContract/payContractLogic');
+const { executePayment } = require('./payContract/payScript');
 
 
 const contractDir = path.resolve(__dirname, './payContract');
