@@ -1,6 +1,3 @@
-const { exec } = require('child_process');
-const path = require('path');
-const fs = require('fs').promises;
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();

@@ -1,16 +1,8 @@
-const { exec } = require('child_process');
-const path = require('path');
-const fs = require('fs').promises;
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { deployContract } = require('./payContract/deployModule');
 const { adminPublicKey } = require('./payContract/config');
 require('dotenv').config();
 
-
-const contractDir = path.resolve(__dirname, './payContract');
-const deployFileName = `deploy.ts`;
-const deployPath = path.resolve(contractDir, deployFileName);
-const resultFilePath = path.resolve(contractDir, 'deployResult.json').replace(/\\/g, '/');
 
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
@@ -45,15 +37,6 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
     throw enhancedError;
   }
 
-    /**
-     *  const result = {
-                            contractId: deployTx.id,
-                            state: contract.dataPayments,
-                            addressOwner: realAddOwner,
-                            addressGN: realAddGN,
-                            paymentQuarks: contract.amountGN
-                        };
-     */
 }
 
           async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
@@ -117,22 +100,5 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
         
 
 module.exports = runDeploy;
-
-/*(async () => {
-    try {
-        const result = await createAndCompileAndDeploy(
-            5000,              // Tokens
-            60,                // Intervalo de tiempo entre transacciones
-            1726598373,        // Fecha de inicio (timestamp)
-            "02d9b4d8362ac9ed90ef2a7433ffbeeb1a14f1e6a0db7e3d9963f6c0629f43e2db",  // Clave pública del dueño
-            "02e750d107190e9a8a944bc14f485c89483a5baa23bc66f2327759a60035312fcc",  // Clave pública de la GN del dueño
-            2125              // Quarks
-        );
-        console.log(result);
-    } catch (error) {
-        console.error('Error en el despliegue:', error);
-    }
-})();*/
-
  
     

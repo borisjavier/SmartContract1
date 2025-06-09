@@ -8,9 +8,9 @@ import { pay, PayParams } from './payScriptModule';
 
 
 const payParams: PayParams = {
-            txId: '9e8a2c6ecdef0979c9e81e7d7ba1e585169bc2778deb8010951293c371fcc627',
+            txId: '48c14d051dcd768a0e3bf1600b3ddb184ef7c5b44367915bf8ed6d8a30df1a74',
             atOutputIndex: 0,
-            datas: [1749241218, 1749241292, 1749241371, 1749239987].map(b => b.toString()),//
+            datas: [1749505049, 1749505455, 1749506119, 1749504933].map(b => b.toString()),//
             txids: [
                 'efaacbcaa8daa4a6a7fa8b2bb91a7cb6ce732fcdd351e0596968891e299f46a7',
                 'efaacbcaa8daa4a6a7fa8b2bb91a7cb6ce732fcdd351e0596968891e299f46a7',
