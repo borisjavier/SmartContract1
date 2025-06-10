@@ -7,27 +7,34 @@ RUN npm install -g npm@10.9.0
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
 
-# Copiar package.json y package-lock.json para instalar dependencias primero
+# 1. Copiar package.json y package-lock.json para instalar dependencias primero
 COPY package*.json ./
 
-# Instalar dependencias
+# 2. Instalar dependencias
 RUN npm install
 
-# Copiar todo el código del proyecto al contenedor
-COPY . .
+# 3. Copiar todo el código del proyecto al contenedor
+COPY ./payContract ./payContract
 
 # --- PAYCONTRACT ---
-# Cambiar al directorio payContract
+# 4. Cambiar al directorio payContract
 WORKDIR /usr/src/app/payContract
 
-# Copiar package.json y package-lock.json de payContract
 COPY ./payContract/package*.json ./
+
+
+# Copiar package.json y package-lock.json de payContract
+# COPY ./payContract/package*.json ./
 
 # Instalar dependencias de payContract
 RUN npm install
 
-# Copiar todos los archivos de pruebas
-COPY ./payContract/tests ./tests
+# 5. Volver al directorio raíz
+WORKDIR /usr/src/app
+
+# 6. Copiar TODOS los archivos raíz (.js) y otros necesarios
+# ¡Esto debe venir después de instalar dependencias!
+COPY . .
 
 # --- ESCROWCONTRACT ---
 # Cambiar al directorio escrowContract
@@ -40,11 +47,13 @@ COPY ./payContract/tests ./tests
 # COPY ./escrowContract/src ./src
 # COPY ./escrowContract/tests ./tests
 
-# Volver al directorio raíz
-WORKDIR /usr/src/app
 
-# Exponer el puerto 8080 para Cloud Run
+# 7. Exponer el puerto 8080 para Cloud Run
 EXPOSE 8080
 
-# Cambiar el comando CMD para ejecutar index.js en lugar de server.js
+
+# Verificar estructura de archivos (opcional, solo para debug)
+RUN ls -lR /usr/src/app
+
+# 8. Ejecutar la aplicación.
 CMD [ "node", "index.js" ]

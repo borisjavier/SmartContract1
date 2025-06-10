@@ -1,5 +1,5 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-const { deployContract } = require('./payContract/deployModule');
+const { deployContract } = require('./payContract/deployModule.ts');
 const { adminPublicKey } = require('./payContract/config');
 require('dotenv').config();
 

@@ -77,7 +77,7 @@ app.post('/transfer', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {  
   console.log(`Cloud Run escuchando en el puerto ${PORT}`);
 });
 

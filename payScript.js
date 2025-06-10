@@ -1,7 +1,7 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();
-const { executePayment } = require('./payContract/payScriptModule');
+const { executePayment } = require('./payContract/payScriptModule.ts');
 
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
