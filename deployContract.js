@@ -1,10 +1,8 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-//const { deployContract } = require('./payContract/dist/testDeploy.js');
 const { deployContract } = require('./payContract/dist/deployModule.js');
 //const { adminPublicKey } = require('./payContract/config');
 require('dotenv').config();
-
-const contractDir = path.resolve(__dirname, './payContract'); 
+ 
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
    try {   
