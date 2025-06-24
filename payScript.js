@@ -19,7 +19,8 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             ownerPubKey
         };
 
-        /*const paymentData = {
+        /*Es bárbaro
+        const paymentData = {
             txId: '705a50853697092fecd4ce7a9a4eccd24eca06e0092d72221d8f1cf8538dbaa9',
             atOutputIndex: 0,
             datas: [1750721340, 1750719766, 1750720066, 1750720366].map(b => b.toString()), //
