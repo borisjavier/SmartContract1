@@ -1,6 +1,6 @@
 //import axios from 'axios';
 //import * as dotenv from 'dotenv';
-import { deployContract } from './deployModule';
+import { deployContract, DeployParams } from './deployModule';
 import { adminPublicKey } from './config';
 //dotenv.config();
 //const adminPubKey = adminPublicKey;
@@ -23,8 +23,10 @@ const deployParams = {
   //adminPublicKey: adminPubKey,
   //privateKey: process.env.PRIVATE_KEY!
 };
+//console.log("Parámetros pasados a deployModule:", deployParams);
 
-async function testDeployment() {
+export async function testDeployment(deployParams: DeployParams) {
+  console.log("Parámetros pasados a deployModule:", deployParams);
   try {
     //const response = await axios.post(TEST_URL, deployParams);
     const result = await deployContract(deployParams);
@@ -59,4 +61,5 @@ async function testDeployment() {
   }
 }
 
-testDeployment();
+testDeployment(deployParams);
+//export default testDeployment;

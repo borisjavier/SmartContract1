@@ -1,7 +1,5 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-const { Mutex } = require('async-mutex');
-const mutex = new Mutex();
-const { executePayment } = require('./payContract/payScriptModule.ts');
+const { pay } = require('./payContract/dist/payScriptModule');
 
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
@@ -21,8 +19,23 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             ownerPubKey
         };
 
+        /*const paymentData = {
+            txId: '705a50853697092fecd4ce7a9a4eccd24eca06e0092d72221d8f1cf8538dbaa9',
+            atOutputIndex: 0,
+            datas: [1750721340, 1750719766, 1750720066, 1750720366].map(b => b.toString()), //
+            txids: [
+                'efaacbcaa8daa4a6a7fa8b2bb91a7cb6ce732fcdd351e0596968891e299f46a7',
+                '501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836',
+                '501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836',
+                '501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'
+            ],
+            txidPago: 'efaacbcaa8daa4a6a7fa8b2bb91a7cb6ce732fcdd351e0596968891e299f46a7',
+            qtyTokens: 100,
+            ownerPubKey: '0285f609126a21237c95f5b211d477b4f6e4bcb0e40103d2107c7b7315dc5bc634'
+        };*/
 
-        const result = await executePayment(paymentData);
+
+        const result = await pay(paymentData);
         console.log('Resultado del pago:', result);
         return result;
        

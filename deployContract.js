@@ -1,12 +1,13 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-const { deployContract } = require('./payContract/deployModule.ts');
-const { adminPublicKey } = require('./payContract/config');
+//const { deployContract } = require('./payContract/dist/testDeploy.js');
+const { deployContract } = require('./payContract/dist/deployModule.js');
+//const { adminPublicKey } = require('./payContract/config');
 require('dotenv').config();
 
-
+const contractDir = path.resolve(__dirname, './payContract'); 
 
 async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
-   try {
+   try {   
     if (!process.env.PRIVATE_KEY) {
     throw new Error("La clave PRIVATE_KEY no está configurada en .env");
     }
@@ -16,20 +17,20 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
       startDate: startDate,
       ownerPub: ownerPubKey,
       ownerGN: ownerGNKey,
-      quarks: quarks,
-      adminPublicKey: adminPublicKey,
-      privateKey: process.env.PRIVATE_KEY
+      quarks: quarks
     };
 
     const result = await deployContract(deployParams);
     
-    return {
-      contractId: result.contractId,
-      state: result.state,
-      addressOwner: result.addressOwner,
-      addressGN: result.addressGN,
-      paymentQuarks: result.paymentQuarks
+    const resultArr = {
+        contractId: result.contractId,
+        state: result.state,
+        addressOwner: result.addressOwner,
+        addressGN: result.addressGN,
+        paymentQuarks: result.paymentQuarks
     };
+    console.log(resultArr)
+    return resultArr;
   } catch (error) {
     // Propagamos el error con información detallada
     const enhancedError = new Error(`Despliegue fallido: ${error.message}`);

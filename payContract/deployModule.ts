@@ -1,8 +1,13 @@
+import * as path from 'path';
+import * as fs from 'fs';
 import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
-import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
+import { bsv, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
 import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
-dotenv.config();
+import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
 
 // Tipos para parámetros
 export type DeployParams = {
@@ -13,10 +18,7 @@ export type DeployParams = {
     ownerGN: string;
     quarks: number;
 };
-/**
- *     adminPublicKey: string;
-    privateKey: string;
- */
+
 
 const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 
@@ -35,6 +37,10 @@ export type DeploymentResult = {
     addressGN: string;
     paymentQuarks: bigint;
 };
+
+function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
+    return utxos.filter(utxo => utxo.height > 0);
+}
 
 
 
@@ -79,9 +85,18 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     validatePubKey(adminPublicKey, 'adminPublicKey');
     validatePubKey(params.ownerPub, 'ownerPub');
     validatePubKey(params.ownerGN, 'ownerGN');
-    
+    const woc_api_key = 'mainnet_3a3bcb1b859226f079def02a452cb9a4';
     // Configurar provider y signer
-    const provider = new DefaultProvider({ network: bsv.Networks.mainnet });
+    const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
+
+    const address = privateKey.toAddress(); 
+
+    const allUtxos = await provider.listUnspent(address);
+    const confirmedUtxos = getConfirmedUtxos(allUtxos);
+
+    if (confirmedUtxos.length === 0) {
+        throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
+    }
 
     const signer = new TestWallet(privateKey, provider);
 
@@ -102,7 +117,15 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     const realAddOwner = bsv.Address.fromPublicKey(ownerPubKey).toString();
     
     // 1. Carga el artefacto COMPILADO (sin ts-node)
-    await PaymentContract.loadArtifact();
+    // 1. Cargar artefacto usando ruta absoluta
+    const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
+    
+    if (!fs.existsSync(artifactPath)) {
+        throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
+    }
+    
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    await PaymentContract.loadArtifact(artifact);
     // 2. Crea instancia con parámetros dinámicos
     const contract = new PaymentContract(
             ownerAddr,
@@ -118,7 +141,9 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
   await contract.connect(signer);
 
   // 4. Despliega y retorna resultado directo
-  const deployTx = await contract.deploy(1);
+  const deployTx = await contract.deploy(1, {
+        utxos: confirmedUtxos  
+    });
   
   // Preparar resultado
   const serializedState: PaymentState = contract.dataPayments.map(payment => ({

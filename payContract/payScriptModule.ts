@@ -1,10 +1,14 @@
 
 import { PaymentContract, Payment, N } from './src/contracts/paycontract';//Timestamp,
-import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, DefaultProvider, ByteString } from 'scrypt-ts';
-import * as dotenv from 'dotenv'
+import * as path from 'path';
+import * as fs from 'fs';
+import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, ByteString } from 'scrypt-ts';
+import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+import * as dotenv from 'dotenv';
 
 // Cargar el archivo .env
-dotenv.config()
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath })
 
 // Tipos para parámetros
 export type PayParams = {
@@ -47,6 +51,10 @@ function filledTxids(dataPayments: Payment[], tx0: ByteString): boolean {
     return true;
 }
 
+function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
+    return utxos.filter(utxo => utxo.height > 0);
+}
+
 
 const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 
@@ -59,17 +67,32 @@ export async function pay(params: PayParams): Promise<PayResult> {
     if (!params.ownerPubKey) {
         throw new Error("Owner public key is required");
     }
+    const woc_api_key = 'mainnet_3a3bcb1b859226f079def02a452cb9a4';
 
-    const provider = new DefaultProvider({ network: bsv.Networks.mainnet });
+    const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
+
+    const address = privateKey.toAddress();
+    const allUtxos = await provider.listUnspent(address);
+    const confirmedUtxos = getConfirmedUtxos(allUtxos);
+
+    if (confirmedUtxos.length === 0) {
+            throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
+        }
+
+    
     const signer = new TestWallet(privateKey, provider);
 
-    // Cargar artefacto del contrato
-    await PaymentContract.loadArtifact();
-    
-    
-    
-                
+    const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
+        
+        if (!fs.existsSync(artifactPath)) {
+            throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
+        }
+        
 
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    // Cargar artefacto del contrato
+    await PaymentContract.loadArtifact(artifact);
+    
     // Cargar instancia del contrato desde la blockchain            
     const txResponse = await provider.getTransaction(params.txId);
                 

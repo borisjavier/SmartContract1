@@ -31,8 +31,9 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "scrypt-ts": "latest",
-    "scrypt-cli": "^0.2.1"
+    "gn-provider": "^1.1.9",
+    "scrypt-cli": "^0.2.1",
+    "scrypt-ts": "latest"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
