@@ -250,7 +250,7 @@ async function extractSizeFromTs(tsPath) {
 async function extractSizeFromDts(dtsPath) {
     try {
         const dtsCode = await fs.readFile(dtsPath, 'utf8');
-        const nMatch = dtsCode.match(/export\s+declare\s+const\s+N:\s*(\d+)/);
+        const nMatch = dtsCode.match(/export\s+declare\s+const\s+N\s*=\s*(\d+)\s*;/);
         
         if (!nMatch) throw new Error("No se encontró la constante N en el archivo d.ts");
         return parseInt(nMatch[1], 10);
