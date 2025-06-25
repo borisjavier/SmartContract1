@@ -1,6 +1,9 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { pay } = require('./payContract/dist/payScriptModule');
-
+const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
     try {
@@ -52,28 +55,40 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         try {
             const { tsSize, jsonSize, source } = await getDataPaymentsSize();
             console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
-            if (tsSize !== size || jsonSize == null)  {
-                console.log(`Se requiere cambio de tamaño para payScript de ${tsSize} a (${size})`);
-                const isCached = await checkCache(size);
-                if (!isCached) {
-                throw new Error(`No hay caché para tamaño ${size}`);
-                }
-                console.log(`Restaurando artifacts para payScript. Tamaño: ${size}...`);
-                await restoreArtifacts(size);
-                // 3. Validación estricta post-restauración
-                const newSizes = await getDataPaymentsSize();
-                if (newSizes.tsSize !== size) {
-                    throw new Error(
-                        `Error crítico: Tamaño en TS (${newSizes.tsSize}) no coincide con ${size}`
-                    );
-                }
+                if (tsSize !== size || (jsonSize && jsonSize !== size)) {
+                    console.log(`Se requiere cambio de tamaño (${size})`);
+                    const isCached = await checkCache(size);
+                    if (!isCached) {
+                        throw new Error(`No hay caché para tamaño ${size}`);
+                    }
+                    console.log(`Restaurando artifacts desde caché para size ${size}.`);
+                    await restoreArtifacts(size);
 
-                if (newSizes.jsonSize && newSizes.jsonSize !== size) {
-                    throw new Error(
-                        `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
-                    );
+                    // 3. Validación estricta post-restauración
+                    const newSizes = await getDataPaymentsSize();
+                    if (newSizes.tsSize !== size) {
+                        throw new Error(
+                            `Error crítico: Tamaño en TS (${newSizes.tsSize}) no coincide con ${size}`
+                        );
+                    }
+
+                    if (newSizes.jsonSize && newSizes.jsonSize !== size) {
+                        throw new Error(
+                            `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
+                        );
+                    }
+
+                    /*// 🔄 Limpiar caché de módulos después de restaurar
+                    Object.keys(require.cache).forEach(key => {
+                        if (key.includes('paycontract') || key.includes('deployModule')) {
+                            delete require.cache[key];
+                        }
+                    });*/
+
+                    // 🔄 RECOMPILAR EL CONTRATO
+                    console.log('Compilando contrato con tsc...');
+                    await compileContract();
                 }
-            }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
             console.log('Llamando payScriptModule...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
@@ -85,6 +100,31 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             throw new Error(`Error en payScript [Runservice]: ${error.message}`);
         }
     }
+
+    async function compileContract() {
+                try {
+                    const { stdout, stderr } = await execPromise('npx tsc', {
+                        cwd: path.resolve(__dirname, 'payContract') // Directorio del contrato
+                    });
+                    
+                    console.log('✅ Compilación exitosa');
+                    console.log(stdout);
+                    
+                    if (stderr) {
+                        console.warn('⚠️ Advertencias de compilación:', stderr);
+                    }
+                    
+                    // Verificar que los archivos JS se generaron
+                    const jsFiles = fs.readdirSync(path.resolve(__dirname, 'payContract/dist'));
+                    if (!jsFiles.length) {
+                        throw new Error('No se generaron archivos JS en la compilación');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error en la compilación:', error);
+                    throw new Error(`Falló la compilación: ${error.stderr || error.message}`);
+                }
+            }
     
     async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
         try {
