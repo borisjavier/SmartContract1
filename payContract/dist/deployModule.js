@@ -126,7 +126,8 @@ async function deployContract(params) {
 }
 exports.deployContract = deployContract;
 async function genDatas(n, l, fechaInicio) {
-    const fechas = (0, scrypt_ts_1.fill)(0n, paycontract_1.N);
+    const fechas = (0, scrypt_ts_1.fill)(0n, n);
+    console.log('Tamaño del array fechas:', n);
     console.log('fechas antes de: ', fechas);
     for (let i = 0; i < n; i++) {
         const fecha = BigInt(fechaInicio + i * l);
