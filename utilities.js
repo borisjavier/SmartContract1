@@ -163,6 +163,7 @@ async function checkCache(size) {
 
     const cacheFolder = `sCrypt cache/paycontract_${size}`;
     const contractDirPath = path.resolve(contractDir, 'src', 'contracts');  // Ruta a la carpeta 'src/contracts'
+    const theJSContractDirPath = path.resolve(contractDir, 'dist', 'src', 'contracts');
     const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
 
     try {
@@ -172,10 +173,26 @@ async function checkCache(size) {
         console.log(`Directorio ${artifactsDirPath} limpiado.`);
         await fs.mkdir(artifactsDirPath, { recursive: true });
 
+        await fs.rm(theJSContractDirPath, { recursive: true, force: true });
+        console.log(`Directorio ${artifactsDirPath} limpiado.`);
+        await fs.mkdir(theJSContractDirPath, { recursive: true });
+
         // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
         for (const file of artifacts) {
             const srcPath = `${cacheFolder}/${file}`;
             const destPath = path.resolve(artifactsDirPath, file);
+            await downloadFile(srcPath, destPath);
+        }
+
+        const jsArtifacts = [
+            'paycontract.d.ts',
+            'paycontract.js',
+            'paycontract.js.map'
+        ];
+
+        for (const file of jsArtifacts) {
+            const srcPath = `${cacheFolder}/${file}`;
+            const destPath = path.resolve(theJSContractDirPath, file);
             await downloadFile(srcPath, destPath);
         }
 

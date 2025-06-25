@@ -100,7 +100,7 @@ folders.forEach(folder => {
   }
 });
 
-function getContentType(fileName) {
+/*function getContentType(fileName) {
     if (fileName.endsWith('.json')) {
       return 'application/json';
     } else if (fileName.endsWith('.scrypt')) {
@@ -111,4 +111,20 @@ function getContentType(fileName) {
         return 'application/typescript'; 
     }
     return 'application/octet-stream'; // Tipo por defecto
-  }
+  }*/
+
+  function getContentType(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+  
+  const typeMap = {
+    '.json': 'application/json',
+    '.scrypt': 'text/plain',
+    '.map': 'application/json', // Para .js.map y .scrypt.map
+    '.ts': 'application/typescript',
+    '.d.ts': 'text/plain',
+    '.js': 'application/javascript',
+    '.transformer.json': 'application/json'
+  };
+
+  return typeMap[extension] || 'application/octet-stream';
+}
