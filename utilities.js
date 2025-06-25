@@ -92,9 +92,9 @@ async function checkCache(size) {
         console.log(`Directorio de artefactos: ${artifactsDirPath} limpiado.`);
         await fs.mkdir(artifactsDirPath, { recursive: true });
 
-        await fs.rm(theJSContractDirPath, { recursive: true, force: true });
+        /*await fs.rm(theJSContractDirPath, { recursive: true, force: true });
         console.log(`Directorio JS del contrato: ${theJSContractDirPath} limpiado.`);
-        await fs.mkdir(theJSContractDirPath, { recursive: true });
+        await fs.mkdir(theJSContractDirPath, { recursive: true });*/
 
         // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
         for (const file of artifacts) {
@@ -103,17 +103,17 @@ async function checkCache(size) {
             await downloadFile(srcPath, destPath);
         }
 
-        const jsArtifacts = [
+        /*const jsArtifacts = [
             'paycontract.d.ts',
             'paycontract.js',
             'paycontract.js.map'
-        ];
+        ];*/
 
-        for (const file of jsArtifacts) {
+        /*for (const file of jsArtifacts) {
             const srcPath = `${cacheFolder}/${file}`;
             const destPath = path.resolve(theJSContractDirPath, file);
             await downloadFile(srcPath, destPath);
-        }
+        }*/
 
         // Limpiar y preparar el directorio 'src/contracts'
         await fs.rm(contractDirPath, { recursive: true, force: true });
