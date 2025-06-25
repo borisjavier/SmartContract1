@@ -1,6 +1,8 @@
 const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const { deployContract } = require('./payContract/dist/deployModule.js');
-//const { adminPublicKey } = require('./payContract/config');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 require('dotenv').config();
  
 
@@ -65,6 +67,17 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
                             `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
                         );
                     }
+
+                    /*// 🔄 Limpiar caché de módulos después de restaurar
+                    Object.keys(require.cache).forEach(key => {
+                        if (key.includes('paycontract') || key.includes('deployModule')) {
+                            delete require.cache[key];
+                        }
+                    });*/
+
+                    // 🔄 RECOMPILAR EL CONTRATO
+                    console.log('Compilando contrato con tsc...');
+                    await compileContract();
                 }
         
                 // Llamar a `createDeploy` para realizar el despliegue del contrato
@@ -75,6 +88,31 @@ async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, qua
         
             } catch (error) {
                 throw new Error(`Error en el proceso: ${error.message}`);
+            }
+        }
+
+        async function compileContract() {
+            try {
+                const { stdout, stderr } = await execPromise('npx tsc', {
+                    cwd: path.resolve(__dirname, 'payContract') // Directorio del contrato
+                });
+                
+                console.log('✅ Compilación exitosa');
+                console.log(stdout);
+                
+                if (stderr) {
+                    console.warn('⚠️ Advertencias de compilación:', stderr);
+                }
+                
+                // Verificar que los archivos JS se generaron
+                const jsFiles = fs.readdirSync(path.resolve(__dirname, 'payContract/dist'));
+                if (!jsFiles.length) {
+                    throw new Error('No se generaron archivos JS en la compilación');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error en la compilación:', error);
+                throw new Error(`Falló la compilación: ${error.stderr || error.message}`);
             }
         }
         
