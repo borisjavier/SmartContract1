@@ -222,8 +222,9 @@ async function getDataPaymentsSize() {
 
         console.log(`✅ Todos los tamaños coinciden: N = ${tsSize}`);
         return {
-            size: tsSize,
-            source: "all-consistent"
+            tsSize,
+            jsonSize,
+            source: jsonSize !== null ? "both" : "ts-only"
         };
         
     } catch (err) {
