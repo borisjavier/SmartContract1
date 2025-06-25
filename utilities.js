@@ -44,32 +44,6 @@ async function downloadFile(fileName, destinationPath) {
     console.log(`Archivo ${fileName} descargado a ${destinationPath}`);
 }
 
-/*async function checkCache(size) {
-    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
-    
-    // Verificar si el directorio de caché existe
-    if (!await dirExists(cachePath)) {
-        console.log(`El directorio de caché no existe para size ${size}.`);
-        return false;  // El directorio no existe, por lo que no hay caché
-    }
-
-    try {
-        // Verifica si los archivos de caché existen
-        const files = await fs.readdir(cachePath);
-        
-        // Verifica si hay exactamente 5 archivos en la caché
-        if (files.length === 5) {
-            console.log(`Artifacts encontrados en la caché para size ${size}.`);
-            return true;  // Si los artifacts están presentes, indica que ya están en caché
-        } else {
-            console.log(`Se encontraron ${files.length} archivos en la caché para size ${size}, se esperaban 5.`);
-            return false;  // No hay suficientes archivos en la caché
-        }
-    } catch (error) {
-        console.error(`Error al leer el directorio de caché: ${error.message}`);
-        return false;  // Si hay un error al leer el directorio, se asume que no hay caché
-    }
-}*/
 
 async function checkCache(size) {
     const cacheFolder = `sCrypt cache/paycontract_${size}`;
@@ -96,62 +70,7 @@ async function checkCache(size) {
     }
 }
 
-/*async function restoreArtifacts(size) {
-    // Lista de artifacts a restaurar desde la caché
-    const artifacts = [
-      'paycontract.json', 
-      'paycontract.scrypt', 
-      'paycontract.scrypt.map', 
-      'paycontract.transformer.json'
-    ];
-  
-    const cachePath = path.resolve(cacheDir, `paycontract_${size}`);
-    const contractDirPath = path.resolve(contractDir, 'src', 'contracts');  // Ruta a la carpeta 'src/contracts'
-    const artifactsDirPath = path.resolve(artifactsDir);  // Ruta a la carpeta 'artifacts'
-  
-    try {
 
-      // Verificar si el directorio de caché existe
-      if (!await dirExists(cachePath)) {
-        throw new Error(`El directorio de caché no existe: ${cachePath}`);
-    }
-
-    if (await dirExists(artifactsDirPath)) {
-        await fs.rm(artifactsDirPath, { recursive: true, force: true });
-        console.log(`Directorio ${artifactsDirPath} limpiado.`);
-        await fs.mkdir(artifactsDirPath, { recursive: true });
-    }
-
-
-  
-      // 2. Restaurar los artifacts a la carpeta 'artifacts'
-      for (const file of artifacts) {
-        const srcPath = path.resolve(cachePath, file);      // Ruta de origen en la caché
-        const destPath = path.resolve(artifactsDirPath, file);  // Ruta destino en 'artifacts'
-        await fs.copyFile(srcPath, destPath);               // Copia el archivo desde la caché a 'artifacts'
-        console.log(`Artifact ${file} restaurado desde la caché para size ${size}.`);
-      }
-  
-      // 3. Eliminar todo el contenido de 'src/contracts' antes de copiar el archivo paycontract.ts
-      await fs.rm(contractDirPath, { recursive: true, force: true });
-      console.log(`Directorio ${contractDirPath} limpiado.`);
-  
-      // 4. Restaurar el archivo paycontract.ts a 'src/contracts'
-      const contractFile = 'paycontract.ts';
-      const contractSrcPath = path.resolve(cachePath, contractFile);  // Ruta de origen en la caché
-      const contractDestPath = path.resolve(contractDirPath, contractFile);  // Ruta destino en 'src/contracts'
-  
-      // Crear nuevamente el directorio 'src/contracts' si ha sido eliminado
-      await fs.mkdir(contractDirPath, { recursive: true });
-  
-      await fs.copyFile(contractSrcPath, contractDestPath);  // Copiar el archivo paycontract.ts a 'src/contracts'
-      console.log(`Archivo ${contractFile} restaurado desde la caché para size ${size}.`);
-  
-    } catch (error) {
-      console.error(`Error al restaurar los artifacts desde la caché: ${error.message}`);
-      throw error;
-    }
-  }*/
 
   async function restoreArtifacts(size) {
     const artifacts = [
@@ -170,11 +89,11 @@ async function checkCache(size) {
         //Crear el archivo correcto paycontract.ts
         // Limpiar el directorio 'artifacts' local
         await fs.rm(artifactsDirPath, { recursive: true, force: true });
-        console.log(`Directorio ${artifactsDirPath} limpiado.`);
+        console.log(`Directorio de artefactos: ${artifactsDirPath} limpiado.`);
         await fs.mkdir(artifactsDirPath, { recursive: true });
 
         await fs.rm(theJSContractDirPath, { recursive: true, force: true });
-        console.log(`Directorio ${artifactsDirPath} limpiado.`);
+        console.log(`Directorio JS del contrato: ${theJSContractDirPath} limpiado.`);
         await fs.mkdir(theJSContractDirPath, { recursive: true });
 
         // Descargar artifacts desde Firebase Storage a la carpeta 'artifacts' local
@@ -198,7 +117,7 @@ async function checkCache(size) {
 
         // Limpiar y preparar el directorio 'src/contracts'
         await fs.rm(contractDirPath, { recursive: true, force: true });
-        console.log(`El Directorio ${contractDirPath} fue limpiado.`);
+        console.log(`El Directorio ts del contrato: ${contractDirPath} fue limpiado.`);
         await fs.mkdir(contractDirPath, { recursive: true });
 
         // Restaurar 'paycontract.ts' desde Firebase a 'src/contracts'
@@ -213,7 +132,7 @@ async function checkCache(size) {
     }
 }
 
-  async function getDataPaymentsSize() {
+  /*async function getDataPaymentsSize() {
     try {
         // 1. Leer el archivo TS del contrato
         const tsPath = path.resolve(contractDir, 'src', 'contracts', 'paycontract.ts');
@@ -240,11 +159,6 @@ async function checkCache(size) {
             const contractJson = JSON.parse(jsonData);
 
             // Encontrar la propiedad "dataPayments" en stateProps
-            /*const dataPaymentProp = contractJson.stateProps.find(
-                function(prop) {
-                    return prop.name === 'dataPayments';
-                }
-            );*/
             const dataPaymentProp = contractJson.stateProps.find(prop => prop.name === 'dataPayments');
 
             if (dataPaymentProp) {
@@ -274,6 +188,97 @@ async function checkCache(size) {
             jsonSize: null,
             source: "error"
         };
+    }
+}*/
+
+async function getDataPaymentsSize() {
+    try {
+        // Definición de rutas
+        const tsPath = path.resolve(contractDir, 'src', 'contracts', 'paycontract.ts');
+        const dtsPath = path.resolve(contractDir, 'dist', 'src', 'contracts', 'paycontract.d.ts');
+        const jsonPath = path.resolve(artifactsDir, 'paycontract.json');
+
+        // 1. Leer y comparar los tres archivos
+        const [tsSize, dtsSize, jsonSize] = await Promise.all([
+            extractSizeFromTs(tsPath),
+            extractSizeFromDts(dtsPath),
+            extractSizeFromJson(jsonPath)
+        ]);
+
+        // 2. Verificar consistencia entre todos los valores
+        const sizes = { tsSize, dtsSize, jsonSize };
+        const sizeValues = Object.values(sizes);
+        const allEqual = sizeValues.every(val => val === sizeValues[0]);
+        
+        if (!allEqual) {
+            const errorMessage = `❌ INCONSISTENCIA EN LOS TAMAÑOS:
+            - TS (${tsPath}): ${tsSize}
+            - d.ts (${dtsPath}): ${dtsSize}
+            - JSON (${jsonPath}): ${jsonSize}`;
+            
+            console.error(errorMessage);
+            throw new Error("Inconsistencia en los valores de N detectada");
+        }
+
+        console.log(`✅ Todos los tamaños coinciden: N = ${tsSize}`);
+        return {
+            size: tsSize,
+            source: "all-consistent"
+        };
+        
+    } catch (err) {
+        console.error("❌ Error crítico en getDataPaymentsSize:", err.message);
+        throw err; // Propaga el error para detener la ejecución
+    }
+}
+
+// Función auxiliar para extraer N de TypeScript
+async function extractSizeFromTs(tsPath) {
+    try {
+        const tsCode = await fs.readFile(tsPath, 'utf8');
+        const nMatch = tsCode.match(/export\s+const\s+N\s*=\s*(\d+)/);
+        
+        if (!nMatch) throw new Error("No se encontró la constante N en el contrato TypeScript");
+        return parseInt(nMatch[1], 10);
+        
+    } catch (err) {
+        throw new Error(`Error procesando TS: ${err.message}`);
+    }
+}
+
+// Función auxiliar para extraer N de d.ts
+async function extractSizeFromDts(dtsPath) {
+    try {
+        const dtsCode = await fs.readFile(dtsPath, 'utf8');
+        const nMatch = dtsCode.match(/export\s+declare\s+const\s+N:\s*(\d+)/);
+        
+        if (!nMatch) throw new Error("No se encontró la constante N en el archivo d.ts");
+        return parseInt(nMatch[1], 10);
+        
+    } catch (err) {
+        throw new Error(`Error procesando d.ts: ${err.message}`);
+    }
+}
+
+// Función auxiliar para extraer N de JSON
+async function extractSizeFromJson(jsonPath) {
+    try {
+        const jsonData = await fs.readFile(jsonPath, 'utf8');
+        const contractJson = JSON.parse(jsonData);
+        
+        const dataPaymentProp = contractJson.stateProps?.find(prop => 
+            prop.name === 'dataPayments'
+        );
+
+        if (!dataPaymentProp) throw new Error("Propiedad dataPayments no encontrada en JSON");
+        
+        const sizeMatch = dataPaymentProp.type.match(/\[(\d+)\]/);
+        if (!sizeMatch) throw new Error("No se pudo extraer tamaño de dataPayments");
+        
+        return parseInt(sizeMatch[1], 10);
+        
+    } catch (err) {
+        throw new Error(`Error procesando JSON: ${err.message}`);
     }
 }
 
