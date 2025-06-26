@@ -83,10 +83,10 @@ async function deployContract(params) {
     }
     const signer = new scrypt_ts_1.TestWallet(privateKey, provider);
     // Generar datas usando la función auxiliar
-    const datas = await genDatas(paycontract_1.N, params.lapse, params.startDate);
+    const datas = await genDatas(params.n, params.lapse, params.startDate);
     // Configurar valores iniciales
     const emptyTxid = (0, scrypt_ts_1.toByteString)('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
-    const txids = (0, scrypt_ts_1.fill)(emptyTxid, paycontract_1.N);
+    const txids = (0, scrypt_ts_1.fill)(emptyTxid, params.n);
     // Preparar claves y direcciones
     const adminPubKey = (0, scrypt_ts_1.PubKey)(config_1.adminPublicKey);
     const ownerPubKey = scrypt_ts_1.bsv.PublicKey.fromHex(params.ownerPub);
@@ -127,7 +127,6 @@ async function deployContract(params) {
 exports.deployContract = deployContract;
 async function genDatas(n, l, fechaInicio) {
     const fechas = (0, scrypt_ts_1.fill)(0n, n);
-    console.log('Tamaño del array fechas:', n);
     console.log('fechas antes de: ', fechas);
     for (let i = 0; i < n; i++) {
         const fecha = BigInt(fechaInicio + i * l);

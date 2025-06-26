@@ -1,4 +1,5 @@
 export type DeployParams = {
+    n: number;
     qtyT: number;
     lapse: number;
     startDate: number;

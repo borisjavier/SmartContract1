@@ -11,6 +11,7 @@ dotenv.config({ path: envPath });
 
 // Tipos para parámetros
 export type DeployParams = {
+    n: number;
     qtyT: number;
     lapse: number;
     startDate: number;
@@ -101,11 +102,11 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     const signer = new TestWallet(privateKey, provider);
 
     // Generar datas usando la función auxiliar
-    const datas = await genDatas(N, params.lapse, params.startDate);
+    const datas = await genDatas(params.n, params.lapse, params.startDate);
 
     // Configurar valores iniciales
     const emptyTxid = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
-    const txids: FixedArray<ByteString, typeof N> = fill(emptyTxid, N);
+    const txids = fill(emptyTxid, params.n) as unknown as FixedArray<ByteString, typeof N>;
 
     // Preparar claves y direcciones
     const adminPubKey = PubKey(adminPublicKey);
@@ -164,7 +165,7 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
 
 async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
                 
-                const fechas: FixedArray<Timestamp, typeof N> = fill(0n, N);
+                const fechas = fill(0n, n) as unknown as FixedArray<Timestamp, typeof N>;
                 console.log('fechas antes de: ', fechas)
 
                 for (let i = 0; i < n; i++) {

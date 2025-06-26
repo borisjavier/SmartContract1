@@ -8,12 +8,13 @@ const execPromise = util.promisify(exec);
 require('dotenv').config();
  
 
-async function createDeploy(qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
+async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
    try {   
     if (!process.env.PRIVATE_KEY) {
     throw new Error("La clave PRIVATE_KEY no está configurada en .env");
     }
     const deployParams = {
+      n: size,
       qtyT: qtyT,
       lapse: lapse,
       startDate: startDate,
