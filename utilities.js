@@ -220,7 +220,7 @@ async function getDataPaymentsSize() {
             throw new Error("Inconsistencia en los valores de N detectada");
         }
 
-        console.log(`✅ Todos los tamaños coinciden: N = ${tsSize}`);
+        console.log(`✅ Todos los tamaños coinciden: N = ${tsSize}, TS: ${tsSize}, d.ts: ${dtsSize}, JSON: ${jsonSize}\nLas rutas son TS: ${tsPath}, d.ts: ${dtsPath}, JSON: ${jsonPath}`);
         return {
             tsSize,
             jsonSize,
