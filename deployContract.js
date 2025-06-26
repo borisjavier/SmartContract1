@@ -9,7 +9,8 @@ require('dotenv').config();
  
 
 async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
-   try {   
+   try {  
+    console.log(`ownerPubKey: ${ownerPubKey}, ownerGNKey: ${ownerGNKey}, quarks: ${quarks}`) 
     if (!process.env.PRIVATE_KEY) {
     throw new Error("La clave PRIVATE_KEY no está configurada en .env");
     }
