@@ -86,7 +86,7 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
         
                 // Llamar a `createDeploy` para realizar el despliegue del contrato
                 console.log('Llamando createDeploy...');
-                const result = await createDeploy(tokens, lapso, start, pubOwner, pubGN, quarks);
+                const result = await createDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks);
                 console.log('Contrato desplegado exitosamente.');
                 return result;
         
