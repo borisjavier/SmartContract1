@@ -1,5 +1,4 @@
 const { checkCache, clearContractCache, dynamicImport, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-//const { deployContract } = require('./payContract/dist/deployModule.js');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');

@@ -1,12 +1,12 @@
-const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-const { pay } = require('./payContract/dist/payScriptModule');
+const { checkCache, clearContractCache, dynamicImport, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
+const contractDir = path.resolve(__dirname, './payContract');
 
-async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
+async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, payScriptFunction) {
     try {
 
         const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
@@ -39,8 +39,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             ownerPubKey: '0285f609126a21237c95f5b211d477b4f6e4bcb0e40103d2107c7b7315dc5bc634'
         };*/
 
-
-        const result = await pay(paymentData);
+        const result = await payScriptFunction(deployParams);
         console.log('Resultado del pago:', result);
         return result;
        
@@ -50,6 +49,8 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         throw error;
     }
 }
+
+let payScriptFromModule = null;
 
 
       async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
@@ -87,13 +88,22 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
                     });*/
 
                     // 🔄 RECOMPILAR EL CONTRATO
-                    console.log('Compilando contrato con tsc...');
-                    await compileContract();
+                    //console.log('Compilando contrato con tsc...');
+                    //await compileContract();
+                    await clearContractCache();
+                    console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);
+
+                    
+                    const payScriptModule = await dynamicImport(
+                        path.resolve(contractDir, 'dist', 'payScriptModule.js')
+                    );
+
+                    payScriptFromModule = payScriptModule.pay;
                 }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
             console.log('Llamando payScriptModule...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
-            const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
+            const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, payScriptFromModule);
             console.log('Pago registrado exitosamente.');
             return result;
     
