@@ -4,6 +4,8 @@ const fs = require('fs').promises; // Acceso a fs.promises para funciones async
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
+const USE_MODULE_CACHE = process.env.NODE_MODULE_CACHE !== '0';
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -131,6 +133,51 @@ async function checkCache(size) {
         throw error;
     }
 }
+
+    async function clearContractCache() {
+        if (USE_MODULE_CACHE === '0') {
+            console.log('🚫 Cache de módulos desactivada - limpieza completa');
+            // Limpieza AGRESIVA para Cloud Run
+            Object.keys(require.cache).forEach(moduleId => {
+            if (!moduleId.includes('node_modules') && 
+                !moduleId.includes('internal')) {
+                delete require.cache[moduleId];
+            }
+            });
+        } else {
+            console.log('🔧 Limpieza de caché dirigida');
+            // Limpieza SELECTIVA
+            const criticalDirs = [
+            path.resolve(contractDir, 'dist'),    // Directorio compilado
+            path.resolve(contractDir, 'artifacts') // Artefactos
+            ];
+            let clearedCount = 0;
+    
+            Object.keys(require.cache).forEach(moduleId => {
+                // Borrar solo módulos en directorios críticos y que sean .js
+                if (criticalDirs.some(dir => moduleId.startsWith(dir)) && 
+                    moduleId.endsWith('.js')) {
+                delete require.cache[moduleId];
+                clearedCount++;
+                console.log(`♻️ Eliminado de caché: ${path.basename(moduleId)}`);
+                }
+            });
+
+            console.log(`✅ ${clearedCount} módulos eliminados de caché`);                                                                                      
+        }
+    }
+
+
+    // Importación dinámica con limpieza previa
+    async function dynamicImport(modulePath) {
+        const resolvedPath = require.resolve(modulePath);
+        
+        // Limpiar específicamente antes de importar
+        delete require.cache[resolvedPath];
+        console.log(`🔄 Módulo limpiado: ${path.basename(modulePath)}`);
+                
+        return require(resolvedPath);
+    }
 
   /*async function getDataPaymentsSize() {
     try {
@@ -285,7 +332,9 @@ async function extractSizeFromJson(jsonPath) {
 
 module.exports = {
     checkCache,
+    clearContractCache,
     dirExists,
+    dynamicImport,
     fileExists,
     getDataPaymentsSize,
     restoreArtifacts

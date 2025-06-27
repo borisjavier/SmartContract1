@@ -20,6 +20,7 @@ async function createDeploy() {//qtyT, lapse, startDate, ownerPubKey, ownerGNKey
       quarks: quarks
     };*/
     const deployParams = {
+    n: 8, //size
     qtyT: 100,          // Cantidad de tokens
     lapse: 300,        // Intervalo de 1 día en segundos
     startDate: Math.floor(Date.now() / 1000), // Timestamp actual

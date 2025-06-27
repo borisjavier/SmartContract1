@@ -1,5 +1,5 @@
-const { checkCache, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
-const { deployContract } = require('./payContract/dist/deployModule.js');
+const { checkCache, clearContractCache, dynamicImport, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
+//const { deployContract } = require('./payContract/dist/deployModule.js');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
@@ -8,7 +8,7 @@ const execPromise = util.promisify(exec);
 require('dotenv').config();
  
 
-async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks) {
+async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks, deployContractFunction) {
    try {  
     console.log(`ownerPubKey: ${ownerPubKey}, ownerGNKey: ${ownerGNKey}, quarks: ${quarks}`) 
     if (!process.env.PRIVATE_KEY) {
@@ -24,7 +24,7 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
       quarks: quarks
     };
 
-    const result = await deployContract(deployParams);
+    const result = await deployContractFunction(deployParams);
     
     const resultArr = {
         contractId: result.contractId,
@@ -44,9 +44,11 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
 
 }
 
+let deployContractFromModule = null;
+
           async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
             try {
-                const { tsSize, jsonSize, source } = await getDataPaymentsSize();
+                const { tsSize, jsonSize } = await getDataPaymentsSize();
                  console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
                 // Verificar si el tamaño actual es diferente del solicitado o si no hay datos almacenados
                 if (tsSize !== size || (jsonSize && jsonSize !== size)) {
@@ -72,21 +74,43 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
                         );
                     }
 
+                    await clearContractCache();
+                    console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);
+
+                    
+                    const deployModule = await dynamicImport(
+                        path.resolve(contractDir, 'dist', 'deployModule.js')
+                    );
+
+                    deployContractFromModule = deployModule.deployContract;
+                 
                     /*// 🔄 Limpiar caché de módulos después de restaurar
                     Object.keys(require.cache).forEach(key => {
                         if (key.includes('paycontract') || key.includes('deployModule')) {
                             delete require.cache[key];
                         }
                     });*/
-
+                    /*if (!USE_MODULE_CACHE) {
+                    console.log('🚫 Cache de módulos desactivada');
+                    // Limpiar caché de módulos
+                    await clearContractCache();
+                    }
+                    console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);*/
                     // 🔄 RECOMPILAR EL CONTRATO
-                    console.log('Compilando contrato con tsc...');
-                    await compileContract();
+                    //console.log('Compilando contrato con tsc...');
+                    //await compileContract();
                 }
         
+                if (!deployContractFromModule) {
+                const deployModule = await dynamicImport(
+                    path.resolve(__dirname, 'deployModule.js')
+                );
+                deployContractFromModule = deployModule.deployContract;
+                }
                 // Llamar a `createDeploy` para realizar el despliegue del contrato
                 console.log('Llamando createDeploy...');
-                const result = await createDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks);
+                const result = await createDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks,
+      deployContractFromModule);
                 console.log('Contrato desplegado exitosamente.');
                 return result;
         
@@ -94,6 +118,8 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
                 throw new Error(`Error en el proceso: ${error.message}`);
             }
         }
+
+        
 
         async function compileContract() {
             try {

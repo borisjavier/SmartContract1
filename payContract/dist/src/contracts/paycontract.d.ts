@@ -5,7 +5,7 @@ export type Payment = {
     timestamp: Timestamp;
     txid: TxId;
 };
-export declare const N = 4;
+export declare const N = 6;
 export type Payments = FixedArray<Payment, typeof N>;
 export declare class PaymentContract extends SmartContract {
     owner: Addr;

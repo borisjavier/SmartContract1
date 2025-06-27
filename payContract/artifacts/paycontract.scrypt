@@ -11,21 +11,21 @@ contract PaymentContract {
   @state Ripemd160 addressGN;
   @state int amountGN;
   @state int qtyTokens;
-  @state Payment[4] dataPayments;
+  @state Payment[6] dataPayments;
   @state bool isValid;
   @state bool isOwner;
   const bytes EMPTY;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[4] datas, bytes[4] txids) {
+  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[6] datas, bytes[6] txids) {
     this.owner = owner;
     this.adminPubKey = adminPubKey;
     this.addressGN = addressGN;
     this.amountGN = amountGN;
     this.qtyTokens = qtyTokens;
-    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 4);
-    loop (4) : i {
+    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 6);
+    loop (6) : i {
         this.dataPayments[i] = {datas[i], txids[i]};
       }
     this.isValid = true;
@@ -49,9 +49,9 @@ contract PaymentContract {
   }
   function updateArr(int currentDate, bytes txid) : bool {
     bool done = true;
-    loop (4) : i {
+    loop (6) : i {
         if(done == true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
-          if(i == 4 - 1 && this.filledTxids(this.dataPayments)) {
+          if(i == 6 - 1 && this.filledTxids(this.dataPayments)) {
             this.isValid = false;
           }
           this.dataPayments[i] = {currentDate, txid};
@@ -60,13 +60,13 @@ contract PaymentContract {
       }
     return true;
   }
-  function filledTxids(Payment[4] dataPayments) : bool {
+  function filledTxids(Payment[6] dataPayments) : bool {
     bool allFilled = true;
     bool done = true;
-    if(4 < 1) {
+    if(6 < 1) {
         allFilled = false;
       }
-    loop (3) : i {
+    loop (5) : i {
         if(done == true && dataPayments[i].txid == this.EMPTY) {
           allFilled = false;
           done = false;
