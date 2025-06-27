@@ -148,7 +148,7 @@ async function checkCache(size) {
             console.log('🔧 Limpieza de caché dirigida');
             // Limpieza SELECTIVA
             const criticalDirs = [
-            path.resolve(contractDir, 'dist'),    // Directorio compilado
+            path.resolve(contractDir, 'dist', 'src', 'contracts'),    // Directorio compilado
             path.resolve(contractDir, 'artifacts') // Artefactos
             ];
             let clearedCount = 0;
