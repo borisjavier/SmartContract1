@@ -6,7 +6,7 @@ const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
 require('dotenv').config();
- 
+const contractDir = path.resolve(__dirname, './payContract');
 
 async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks, deployContractFunction) {
    try {  
