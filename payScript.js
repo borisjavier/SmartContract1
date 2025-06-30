@@ -39,7 +39,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             ownerPubKey: '0285f609126a21237c95f5b211d477b4f6e4bcb0e40103d2107c7b7315dc5bc634'
         };*/
 
-        const result = await payScriptFunction(deployParams);
+        const result = await payScriptFunction(paymentData);
         console.log('Resultado del pago:', result);
         return result;
        

@@ -32,7 +32,7 @@ app.post('/gen-contract', async (req, res) => {
     });
   } catch (error) {
     console.error(`Error de despliegue: ${error.message}`);
-    res.status(500).json({ error: `Error al generar contrato: ${error.message}` });
+    res.status(500).json({ error: `Error al desplegar el contrato: ${error.message}` });
   }
 });
 
@@ -58,7 +58,7 @@ app.post('/pay', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).send({ error: `Error al desplegar contrato: ${error.message}` });
+    res.status(500).send({ error: `Error al llamar al método en payScript: ${error.message}` });
   }
 });
 
@@ -72,7 +72,7 @@ app.post('/transfer', async (req, res) => {
     await deployContract(size);  // Llamar a la función para desplegar el contrato
     res.status(200).send({message: `Contrato desplegado con size: ${size}`});
   } catch (error) {
-    res.status(500).send({ error: `Error al desplegar contrato: ${error.message}` });
+    res.status(500).send({ error: `Error al llamar al método en transferModule: ${error.message}` });
   }
 });
 
