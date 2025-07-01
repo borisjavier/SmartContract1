@@ -9,15 +9,16 @@ const contractDir = path.resolve(__dirname, './payContract');
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, payScriptFunction) {
     try {
 
-        const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
-        const formattedTxids = JSON.stringify(txids);
+        //const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
+        const bigIntArrayDatas = datas.map(num => BigInt(num).toString());
+        //const formattedTxids = JSON.stringify(txids)
         const bigNumberQtyTokens = `${qtyT}`;
 
         const paymentData = {
             txId: lastStateTxid,
             atOutputIndex: 0,
-            datas: bigIntArrayDatas.map(b => b.toString()),//
-            txids: formattedTxids,
+            datas: bigIntArrayDatas,//.map(b => b.toString())
+            txids: txids,
             txidPago,
             qtyTokens: bigNumberQtyTokens,
             ownerPubKey
