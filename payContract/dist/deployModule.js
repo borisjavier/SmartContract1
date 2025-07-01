@@ -35,7 +35,7 @@ const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
 const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 function getConfirmedUtxos(utxos) {
-    return utxos.filter(utxo => utxo.height > 0);
+    return utxos.filter(utxo => utxo.height >= 0);
 }
 async function deployContract(params) {
     //console.log('En deployModule los params recibidos son: ', JSON.stringify(params, null, 2));

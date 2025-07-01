@@ -40,7 +40,7 @@ export type DeploymentResult = {
 };
 
 function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter(utxo => utxo.height > 0);
+    return utxos.filter(utxo => utxo.height >= 0);
 }
 
 
