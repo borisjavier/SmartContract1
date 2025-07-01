@@ -163,8 +163,8 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
 }
 
 
-async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
-                
+/*async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
+              if(n == N) {
                 const fechas = fill(0n, n) as unknown as FixedArray<Timestamp, typeof N>;
                 console.log('fechas antes de: ', fechas)
 
@@ -177,7 +177,29 @@ async function genDatas(n: number, l: number, fechaInicio: number): Promise<Fixe
                 console.log('fechas después de: ', fechas);
 
                 return fechas;
-            }
+              } else {
+                throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`)
+              } 
+                
+            }*/
+
+async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
+    // Verificar compatibilidad de tamaños
+    if (n !== N) {
+        throw new Error(
+            `Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`
+        );
+    }
+    
+    const fechas = fill(0n, N) as FixedArray<bigint, typeof N>;  
+    
+    for (let i = 0; i < N; i++) {  
+        const fecha = BigInt(fechaInicio + i * l);
+        fechas[i] = fecha;
+    }
+
+    return fechas;
+}
 
 
 

@@ -125,15 +125,35 @@ async function deployContract(params) {
     };
 }
 exports.deployContract = deployContract;
+/*async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
+              if(n == N) {
+                const fechas = fill(0n, n) as unknown as FixedArray<Timestamp, typeof N>;
+                console.log('fechas antes de: ', fechas)
+
+                for (let i = 0; i < n; i++) {
+                    const fecha = BigInt(fechaInicio + i * l);
+                    console.log('fecha: ', fecha)
+                    fechas[i] = BigInt(fecha);
+                }
+
+                console.log('fechas después de: ', fechas);
+
+                return fechas;
+              } else {
+                throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`)
+              }
+                
+            }*/
 async function genDatas(n, l, fechaInicio) {
-    const fechas = (0, scrypt_ts_1.fill)(0n, n);
-    console.log('fechas antes de: ', fechas);
-    for (let i = 0; i < n; i++) {
-        const fecha = BigInt(fechaInicio + i * l);
-        console.log('fecha: ', fecha);
-        fechas[i] = BigInt(fecha);
+    // Verificar compatibilidad de tamaños
+    if (n !== paycontract_1.N) {
+        throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${paycontract_1.N}). Detenga el proceso.`);
     }
-    console.log('fechas después de: ', fechas);
+    const fechas = (0, scrypt_ts_1.fill)(0n, paycontract_1.N);
+    for (let i = 0; i < paycontract_1.N; i++) {
+        const fecha = BigInt(fechaInicio + i * l);
+        fechas[i] = fecha;
+    }
     return fechas;
 }
 //# sourceMappingURL=deployModule.js.map

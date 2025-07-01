@@ -80,16 +80,6 @@ let payScriptFromModule = null;
                         );
                     }
 
-                    /*// 🔄 Limpiar caché de módulos después de restaurar
-                    Object.keys(require.cache).forEach(key => {
-                        if (key.includes('paycontract') || key.includes('deployModule')) {
-                            delete require.cache[key];
-                        }
-                    });*/
-
-                    // 🔄 RECOMPILAR EL CONTRATO
-                    //console.log('Compilando contrato con tsc...');
-                    //await compileContract();
                     await clearContractCache();
                     console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);
 
