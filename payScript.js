@@ -89,8 +89,15 @@ let payScriptFromModule = null;
                         path.resolve(contractDir, 'dist', 'payScriptModule.js')
                     );
 
-                    payScriptFromModule = payScriptModule.pay;
+                    payScriptFromModule = payScriptModule.pay;//payScriptFunction
                 }
+            
+            if (!payScriptFromModule) {
+                const payScriptModule = await dynamicImport(
+                    path.resolve(__dirname, 'payScriptModule.js')
+                );
+                payScriptFromModule = payScriptModule.pay;
+            }
     
             // Llamar a `createAndPay` para ejecutar el script de pago
             console.log('Llamando payScriptModule...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
