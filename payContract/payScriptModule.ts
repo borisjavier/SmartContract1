@@ -97,7 +97,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
     const txResponse = await provider.getTransaction(params.txId);
                 
     const instance = PaymentContract.fromTx(txResponse, params.atOutputIndex)
-    await instance.connect(signer); //getDefaultSigner(privateKey)
+    
 
     
     // Preparar constantes
@@ -132,8 +132,14 @@ export async function pay(params: PayParams): Promise<PayResult> {
             updated = true;
         }
     }
-    console.log(`dataPayments es: ${JSON.stringify(dataPayments)}`)
+
+    if (dataPayments.length !== N) {
+    throw new Error(`Longitud inválida de dataPayments: esperado ${N}, obtenido ${dataPayments.length}`);
+    }   
+    console.log(`dataPayments es: ${JSON.stringify(dataPayments)}`);
+
     // Crear la próxima instancia
+    await instance.connect(signer); //getDefaultSigner(privateKey)
     const nextInstance = instance.next();
     nextInstance.dataPayments = dataPayments;
     nextInstance.isValid = isValid;
