@@ -94,7 +94,7 @@ let payScriptFromModule = null;
             
             if (!payScriptFromModule) {
                 const payScriptModule = await dynamicImport(
-                    path.resolve(__dirname, 'payScriptModule.js')
+                    path.resolve(contractDir, 'dist', 'payScriptModule.js')
                 );
                 payScriptFromModule = payScriptModule.pay;
             }
