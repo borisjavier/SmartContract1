@@ -38,20 +38,16 @@ function getConfirmedUtxos(utxos) {
     return utxos.filter(utxo => utxo.height >= 0);
 }
 async function deployContract(params) {
-    //console.log('En deployModule los params recibidos son: ', JSON.stringify(params, null, 2));
     // Validar parámetros esenciales
+    if (!process.env.WOC_API_KEY) {
+        throw new Error("WOC_API_KEY environment variable is not set");
+    }
     if (!privateKey) {
         throw new Error("Private key is required");
     }
     if (!config_1.adminPublicKey) {
         throw new Error("Admin public key is required");
     }
-    // Validar formato de claves públicas
-    /*const validatePubKey = (key: string) => {
-        if (!key.startsWith('02') && !key.startsWith('03') || key.length !== 66) {
-            throw new Error(`Clave pública inválida: ${key}`);
-        }
-    };*/
     const validatePubKey = (key, name) => {
         if (typeof key !== 'string') {
             throw new Error(`${name} debe ser un string`);
@@ -66,13 +62,10 @@ async function deployContract(params) {
             throw new Error(`${name} contiene caracteres no hexadecimales`);
         }
     };
-    //validatePubKey(params.adminPublicKey);
-    //validatePubKey(params.ownerPub);
-    //validatePubKey(params.ownerGN);
     validatePubKey(config_1.adminPublicKey, 'adminPublicKey');
     validatePubKey(params.ownerPub, 'ownerPub');
     validatePubKey(params.ownerGN, 'ownerGN');
-    const woc_api_key = 'mainnet_3a3bcb1b859226f079def02a452cb9a4';
+    const woc_api_key = process.env.WOC_API_KEY;
     // Configurar provider y signer
     const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key);
     const address = privateKey.toAddress();

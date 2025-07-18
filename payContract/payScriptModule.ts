@@ -60,6 +60,9 @@ const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 
 export async function pay(params: PayParams): Promise<PayResult> {
     console.log('params.datas: ',params.datas);
+    if (!process.env.WOC_API_KEY) {
+        throw new Error("WOC_API_KEY environment variable is not set");
+    }
     if (!process.env.PRIVATE_KEY) {
     throw new Error("Private key is required in .env")
     }
@@ -67,7 +70,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
     if (!params.ownerPubKey) {
         throw new Error("Owner public key is required");
     }
-    const woc_api_key = 'mainnet_3a3bcb1b859226f079def02a452cb9a4';
+    const woc_api_key = process.env.WOC_API_KEY;
 
     const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
 

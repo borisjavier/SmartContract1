@@ -52,13 +52,16 @@ function getConfirmedUtxos(utxos) {
 const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 async function pay(params) {
     console.log('params.datas: ', params.datas);
+    if (!process.env.WOC_API_KEY) {
+        throw new Error("WOC_API_KEY environment variable is not set");
+    }
     if (!process.env.PRIVATE_KEY) {
         throw new Error("Private key is required in .env");
     }
     if (!params.ownerPubKey) {
         throw new Error("Owner public key is required");
     }
-    const woc_api_key = 'mainnet_3a3bcb1b859226f079def02a452cb9a4';
+    const woc_api_key = process.env.WOC_API_KEY;
     const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key);
     const address = privateKey.toAddress();
     const allUtxos = await provider.listUnspent(address);
