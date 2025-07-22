@@ -175,6 +175,13 @@ app.post('/callRefund', async (req, res) => {
     }
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {  
   console.log(`Cloud Run escuchando en el puerto ${PORT}`);

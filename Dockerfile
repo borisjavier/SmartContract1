@@ -14,15 +14,19 @@ COPY ./escrowContract/package*.json ./escrowContract/
 
 
 # 2. Instala dependencias (sin scripts que requieran husky)
-RUN npm install --production --ignore-scripts && \
+RUN npm install && \
     cd payContract && \
-    npm install --production --ignore-scripts && \
+    npm install && \
     cd ../escrowContract && \
-    npm install --production --ignore-scripts
+    npm install
 
 # 3. Copia el resto del código (excluyendo lo innecesario)
 COPY . .
 
-# 4. Exponer puerto y ejecutar
+# 4. Salud de la aplicación (opcional pero recomendado)
+HEALTHCHECK --interval=5s --timeout=3s \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+
+# 5. Exponer puerto y ejecutar
 EXPOSE 8080
 CMD ["node", "index.js"]
