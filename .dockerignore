@@ -1,16 +1,27 @@
-**node_modules/
-payContract/.vscode
-payContract/.husky
-payContract/.eslint*
-payContract/.travis.yml
-**.log
-payContract/.gitignore
-payContract/.env
-payContract/.env.example
-payContract/.idea
-payContract/.github
-payContract/.mocharc.json
-payContract/.mocharc-testnet.json
-**.md
-payContract/.prettierrc
-payContract/.prettierignore
+# Directorios principales a ignorar
+**/node_modules/
+**/.vscode/
+**/.husky/
+**/.idea/
+**/.github/
+
+# Archivos de configuración
+**/.eslint*
+**/.travis.yml
+**/.gitignore
+**/.env*
+**/.mocharc*
+**/.prettier*
+
+# Archivos generados y logs
+**/*.log
+**/*.md
+
+# Archivos del sistema y editor
+.DS_Store
+*.swp
+*.swo
+
+# Archivos de lock innecesarios
+yarn.lock
+package-lock.json

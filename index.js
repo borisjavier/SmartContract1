@@ -1,8 +1,12 @@
 const express = require('express');
 const runContract = require('./deployContract.js');
 const payScript = require('./payScript.js');
+const { deployEscrowContract } = require('./escrowContract/dist/deployModule');
+const { payEscrowContract } = require('./escrowContract/dist/payEscrowModule');
+const { refundEscrowContract } = require('./escrowContract/dist/refundEscrowModule');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();  // Mutex compartido para ambas funciones
+const mutexE = new Mutex();
 
 const app = express();
 app.use(express.json());
@@ -74,6 +78,101 @@ app.post('/transfer', async (req, res) => {
   } catch (error) {
     res.status(500).send({ error: `Error al llamar al método en transferModule: ${error.message}` });
   }
+});
+
+
+app.post('/depEscrow', async (req, res) => {
+  const { publicKeys, lockTimeMin } = req.body;
+  try {
+        if (!publicKeys || !Array.isArray(publicKeys) || publicKeys.length === 0) {
+          return res.status(400).json({ error: "publicKeys inválido" });
+        }
+        if (!lockTimeMin || isNaN(lockTimeMin)) {
+          return res.status(400).json({ error: "lockTimeMin inválido" });
+        }
+    
+        const deployParams = {
+            publicKeys: publicKeys,
+            lockTimeMin: BigInt(lockTimeMin),
+            amount: 10
+        };
+        await mutex.runExclusive(async () => {
+          const result = await deployEscrowContract(deployParams);
+          return {
+            txId: result.txId,
+            keyUsed: result.keyUsed
+          };
+        });
+    } catch (error) {
+        console.error('Error deploying escrow contract:', error);
+        throw new Error(`Escrow deployment failed: ${error.message}`);
+    }
+})
+
+app.post('/payEsc', async (req, res) => {
+    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    try {
+        // Validación básica
+        if (!txId || !deployerKeyType || !participantKeys) {
+            return res.status(400).json({ error: "Missing required parameters" });
+        }
+
+        const payParams = {
+            txId: txId,
+            deployerKeyType: deployerKeyType,
+            participantKeys: participantKeys,
+            atOutputIndex: atOutputIndex || 0
+        };
+
+        // Usamos mutex para exclusión mutua
+        await mutexE.runExclusive(async () => {
+            const result = await payEscrowContract(payParams);
+            res.status(200).json({
+                message: 'Escrow payment successful',
+                txId: result.txId,
+                usedKeyType: result.usedKeyType
+            });
+        });
+    } catch (error) {
+        console.error('Error paying escrow contract:', error);
+        res.status(500).json({ 
+            error: 'Escrow payment failed',
+            message: error.message 
+        });
+    }
+});
+
+app.post('/callRefund', async (req, res) => {
+    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    try {
+        // Validación básica
+        if (!txId || !deployerKeyType || !participantKeys) {
+            return res.status(400).json({ error: "Missing required parameters" });
+        }
+
+        const refundParams = {
+            txId: txId,
+            deployerKeyType: deployerKeyType,
+            participantKeys: participantKeys,
+            atOutputIndex: atOutputIndex || 0
+        };
+
+        // Usamos mutex para exclusión mutua
+        await mutexE.runExclusive(async () => {
+            const result = await refundEscrowContract(refundParams);
+            res.status(200).json({
+                message: 'Escrow refund successful',
+                txId: result.txId,
+                usedKeyType: result.usedKeyType
+            });
+        });
+    } catch (error) {
+        console.error('Error refunding escrow contract:', error);
+        res.status(500).json({ 
+            error: 'Escrow refund failed',
+            message: error.message 
+        });
+    }
 });
 
 const PORT = process.env.PORT || 8080;

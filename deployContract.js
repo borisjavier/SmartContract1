@@ -82,22 +82,7 @@ let deployContractFromModule = null;
                     );
 
                     deployContractFromModule = deployModule.deployContract;
-                 
-                    /*// 🔄 Limpiar caché de módulos después de restaurar
-                    Object.keys(require.cache).forEach(key => {
-                        if (key.includes('paycontract') || key.includes('deployModule')) {
-                            delete require.cache[key];
-                        }
-                    });*/
-                    /*if (!USE_MODULE_CACHE) {
-                    console.log('🚫 Cache de módulos desactivada');
-                    // Limpiar caché de módulos
-                    await clearContractCache();
-                    }
-                    console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);*/
-                    // 🔄 RECOMPILAR EL CONTRATO
-                    //console.log('Compilando contrato con tsc...');
-                    //await compileContract();
+                
                 }
         
                 if (!deployContractFromModule) {
@@ -115,33 +100,6 @@ let deployContractFromModule = null;
         
             } catch (error) {
                 throw new Error(`Error en el proceso: ${error.message}`);
-            }
-        }
-
-        
-
-        async function compileContract() {
-            try {
-                const { stdout, stderr } = await execPromise('npx tsc', {
-                    cwd: path.resolve(__dirname, 'payContract') // Directorio del contrato
-                });
-                
-                console.log('✅ Compilación exitosa');
-                console.log(stdout);
-                
-                if (stderr) {
-                    console.warn('⚠️ Advertencias de compilación:', stderr);
-                }
-                
-                // Verificar que los archivos JS se generaron
-                const jsFiles = fs.readdirSync(path.resolve(__dirname, 'payContract/dist'));
-                if (!jsFiles.length) {
-                    throw new Error('No se generaron archivos JS en la compilación');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error en la compilación:', error);
-                throw new Error(`Falló la compilación: ${error.stderr || error.message}`);
             }
         }
         

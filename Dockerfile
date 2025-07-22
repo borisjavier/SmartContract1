@@ -1,21 +1,32 @@
 # Usa Node.js 20 (usa Alpine para imagen más pequeña)
-FROM node:20
-
-# Actualiza npm
-RUN npm install -g npm@10.9.0
+FROM node:20-alpine
 
 # Establece directorio de trabajo
 WORKDIR /usr/src/app
 
+RUN apk add --no-cache --virtual .build-deps \
+        python3 \
+        make \
+        g++
+
+# Actualiza npm
+RUN npm install -g npm@10.9.0
+
 # 1. Copia SOLO los archivos necesarios para instalar dependencias
 COPY package*.json ./
 COPY ./payContract/package*.json ./payContract/
+COPY ./escrowContract/package*.json ./escrowContract/
+
 
 # 2. Instala dependencias del root y de payContract
-RUN npm install && \
+RUN npm install --production && \
     cd payContract && \
-    npm install
+    npm install --production && \
+    cd ../escrowContract && \
+    npm install --production
 
+# ELIMINAR herramientas de compilación (ya no se necesitan)
+RUN apk del .build-deps
 # 3. Copia el resto del código (excluyendo lo innecesario)
 COPY . .
 
