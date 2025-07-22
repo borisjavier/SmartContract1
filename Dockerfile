@@ -4,11 +4,6 @@ FROM node:20-alpine
 # Establece directorio de trabajo
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache --virtual .build-deps \
-        python3 \
-        make \
-        g++
-
 # Actualiza npm
 RUN npm install -g npm@10.9.0
 
@@ -18,15 +13,13 @@ COPY ./payContract/package*.json ./payContract/
 COPY ./escrowContract/package*.json ./escrowContract/
 
 
-# 2. Instala dependencias del root y de payContract
-RUN npm install --production && \
+# 2. Instala dependencias (sin scripts que requieran husky)
+RUN npm install --production --ignore-scripts && \
     cd payContract && \
-    npm install --production && \
+    npm install --production --ignore-scripts && \
     cd ../escrowContract && \
-    npm install --production
+    npm install --production --ignore-scripts
 
-# ELIMINAR herramientas de compilación (ya no se necesitan)
-RUN apk del .build-deps
 # 3. Copia el resto del código (excluyendo lo innecesario)
 COPY . .
 
