@@ -53,7 +53,10 @@ async function main(txId: string,
                         if (!deployerPrivateKey) {
                             throw new Error(`Deployer key ${deployerKeyType} not found in .env ${atOutputIndex}`)
                         }
-            
+            const additionalKey = sanitizePrivateKey(process.env.PRIVATE_KEY_3);
+            if (!additionalKey) {
+                throw new Error("Additional key (PRIVATE_KEY_3) not found in .env");
+            }
                         const participantPrivateKeys = participantKeys.map(wif => {
                             try {
                                 return bsv.PrivateKey.fromWIF(wif)
@@ -61,7 +64,24 @@ async function main(txId: string,
                                 throw new Error(`Invalid participant key: ${wif.substring(0, 6)}...`)
                             }
                         })
-            const allPrivateKeys = [deployerPrivateKey, ...participantPrivateKeys];
+            
+            let allPrivateKeys;
+            //const allPrivateKeys = [deployerPrivateKey, ...participantPrivateKeys];
+            if (deployerKeyType === "PRIVATE_KEY") {
+                allPrivateKeys = [
+                    deployerPrivateKey,   // PRIVATE_KEY (primera)
+                    additionalKey,        // PRIVATE_KEY_3 (segunda)
+                    ...participantPrivateKeys
+                ];
+            } else if (deployerKeyType === "PRIVATE_KEY_2") {
+                allPrivateKeys = [
+                    additionalKey,        // PRIVATE_KEY_3 (primera)
+                    deployerPrivateKey,   // PRIVATE_KEY_2 (segunda)
+                    ...participantPrivateKeys
+                ];
+            } else {
+                throw new Error(`Tipo de clave de despliegue inválido: ${deployerKeyType}`);
+            }
             const publicKeys = allPrivateKeys.map(pk => pk.publicKey);
             const address = deployerPrivateKey.toAddress();
             const allUtxos = await provider.listUnspent(address);

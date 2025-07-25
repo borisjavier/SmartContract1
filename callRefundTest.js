@@ -22,8 +22,8 @@ async function testRefundEscrow(txId, deployerKeyType, participantKeys, atOutput
     }
 }
 
-// Parámetros de ejemplo (reemplaza con valores reales)
-const DEPLOYED_CONTRACT_TXID = '67911d849e52338a0f58b34962837872b96eccad605e178d3b366325a4d26af1'; // Reemplaza con el txid de tu contrato desplegado
+// Parámetros de ejemplo (reemplazar con valores reales)
+const DEPLOYED_CONTRACT_TXID = '67911d849e52338a0f58b34962837872b96eccad605e178d3b366325a4d26af1'; // Reemplazar con el txid del contrato desplegado
 const DEPLOYER_KEY_TYPE = 'PRIVATE_KEY'; // o 'PRIVATE_KEY_2'
 const PARTICIPANT_KEYS = [
     'KzZfDKPM4UVYk4aRD6gkw6hYFeB7yRtHUTzF5XKeJ8S1wWVWY7a4', 

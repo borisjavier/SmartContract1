@@ -11,8 +11,8 @@ import {
     Ripemd160
 } from 'scrypt-ts'
 
-export const SIGS = 4;
-const nec = SIGS - 1;
+export const SIGS = 5;
+const nec = SIGS - 2;
 
 export class Escrowcontract extends SmartContract {
     @prop()

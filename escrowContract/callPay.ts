@@ -54,14 +54,34 @@ async function main(txId: string,
                 throw new Error(`Deployer key ${deployerKeyType} not found in .env ${atOutputIndex}`)
             }
 
+            const additionalKey = sanitizePrivateKey(process.env.PRIVATE_KEY_3);
+            if (!additionalKey) {
+                throw new Error("Additional key (PRIVATE_KEY_3) not found in .env");
+            }
             const participantPrivateKeys = participantKeys.map(wif => {
                 try {
                     return bsv.PrivateKey.fromWIF(wif)
                 } catch (error) {
                     throw new Error(`Invalid participant key: ${wif.substring(0, 6)}...`)
                 }
-            })
-            const allPrivateKeys = [deployerPrivateKey, ...participantPrivateKeys];
+            });
+            let allPrivateKeys;
+            //const allPrivateKeys = [deployerPrivateKey, ...participantPrivateKeys];
+            if (deployerKeyType === "PRIVATE_KEY") {
+                allPrivateKeys = [
+                    deployerPrivateKey,   // PRIVATE_KEY (primera)
+                    additionalKey,        // PRIVATE_KEY_3 (segunda)
+                    ...participantPrivateKeys
+                ];
+            } else if (deployerKeyType === "PRIVATE_KEY_2") {
+                allPrivateKeys = [
+                    additionalKey,        // PRIVATE_KEY_3 (primera)
+                    deployerPrivateKey,   // PRIVATE_KEY_2 (segunda)
+                    ...participantPrivateKeys
+                ];
+            } else {
+                throw new Error(`Tipo de clave de despliegue inválido: ${deployerKeyType}`);
+            }
             const publicKeys = allPrivateKeys.map(pk => pk.publicKey);
             const address = deployerPrivateKey.toAddress(); //allPrivateKeys.map(pk => pk.toAddress());
             const allUtxos = await provider.listUnspent(address);
@@ -116,6 +136,6 @@ const participantKeys = [
     'KzZfDKPM4UVYk4aRD6gkw6hYFeB7yRtHUTzF5XKeJ8S1wWVWY7a4', 'KynAzcDwiWvfSLGWF8peu3qhj5nLWsKFKXzqSck62vsXw5i8kuTe', 'L2TXfUrNorr11W34ujZnvtRnvxyb1KwVSAMNSTKsQfbAbfwuUxLz'
 ]
 
-main('6cb0933805f666f5c6417c83b572d3b2835ceabd9a8260e6361dee984f244f5f', 'PRIVATE_KEY', participantKeys)
+main('1d82c1dc9522c0b41be40d414a46c654ed66c7000030130c15ee617013bb81b9', 'PRIVATE_KEY', participantKeys)
 
 

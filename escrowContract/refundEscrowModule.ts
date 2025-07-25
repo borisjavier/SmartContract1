@@ -75,6 +75,10 @@ export async function refundEscrowContract(params: RefundEscrowParams): Promise<
                 const instance = Escrowcontract.fromTx(txResponse, params.atOutputIndex || 0);
 
                 const deployerPrivateKey = sanitizePrivateKey(process.env[params.deployerKeyType]);
+                const additionalKey = sanitizePrivateKey(process.env.PRIVATE_KEY_3);
+                if (!additionalKey) {
+                    throw new Error("Additional key (PRIVATE_KEY_3) not found in .env");
+                }
                 const participantPrivateKeys = params.participantKeys.map(wif => {
                     try {
                         return bsv.PrivateKey.fromWIF(wif);
@@ -82,7 +86,24 @@ export async function refundEscrowContract(params: RefundEscrowParams): Promise<
                         throw new Error(`Invalid participant key: ${wif.substring(0, 6)}...`);
                     }
                 });
-                const allPrivateKeys = [deployerPrivateKey, ...participantPrivateKeys];
+
+
+                let allPrivateKeys;
+                if (params.deployerKeyType === "PRIVATE_KEY") {
+                    allPrivateKeys = [
+                        deployerPrivateKey,   // PRIVATE_KEY (primera)
+                        additionalKey,        // PRIVATE_KEY_3 (segunda)
+                        ...participantPrivateKeys
+                    ];
+                } else if (params.deployerKeyType === "PRIVATE_KEY_2") {
+                    allPrivateKeys = [
+                        additionalKey,        // PRIVATE_KEY_3 (primera)
+                        deployerPrivateKey,   // PRIVATE_KEY_2 (segunda)
+                        ...participantPrivateKeys
+                    ];
+                } else {
+                    throw new Error(`Tipo de clave de despliegue inválido: ${params.deployerKeyType}`);
+                }
                 const publicKeys = allPrivateKeys.map(pk => pk.publicKey);
 
                 // Obtener UTXOs para el signer
