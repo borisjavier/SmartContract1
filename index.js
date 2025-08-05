@@ -93,7 +93,7 @@ app.post('/depEscrow', async (req, res) => {
     
         const deployParams = {
             publicKeys: publicKeys,
-            lockTimeMin: BigInt(lockTimeMin),
+            lockTimeMin: lockTimeMin,
             amount: 100
         };
         await mutex.runExclusive(async () => {

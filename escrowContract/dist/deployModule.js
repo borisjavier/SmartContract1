@@ -87,12 +87,12 @@ async function deployEscrowContract(params) {
     const pubKeys = params.publicKeys.map(pk => (0, scrypt_ts_1.PubKey)(pk));
     const addresses = pubKeys.map(pk => (0, scrypt_ts_1.Addr)((0, scrypt_ts_1.hash160)(pk)));
     // Función interna para reintentos
-    const deployWithRetry = async (attempts = 4, delay = 3000) => {
+    const deployWithRetry = async (attempts = 3, delay = 3000) => {
         let lastError = null;
         for (let i = 0; i < attempts; i++) {
             try {
                 const privateKey = getPrivateKey(i);
-                const keyUsed = i < 3 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
+                const keyUsed = i < 2 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
                 const address = privateKey.toAddress();
                 const allUtxos = await provider.listUnspent(address);
                 const confirmedUtxos = getConfirmedUtxos(allUtxos);

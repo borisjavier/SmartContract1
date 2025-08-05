@@ -38,7 +38,6 @@ deployEscrow(publicKeys, lockTimeMin, amount)
         console.log('Escrow deployed successfully!');
         console.log('Transaction ID:', result.txId);
         console.log('Key used:', result.keyUsed);
-        console.log('Contract Address:', result.contractAddress);
     })
     .catch(error => {
         console.error('Deployment failed:', error);

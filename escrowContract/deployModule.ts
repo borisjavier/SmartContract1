@@ -90,13 +90,13 @@ export async function deployEscrowContract(params: EscrowDeployParams): Promise<
     const addresses = pubKeys.map(pk => Addr(hash160(pk))) as FixedArray<Addr, typeof SIGS>;
 
     // Función interna para reintentos
-    const deployWithRetry = async (attempts = 4, delay = 3000): Promise<EscrowDeploymentResult> => {
+    const deployWithRetry = async (attempts = 3, delay = 3000): Promise<EscrowDeploymentResult> => {
         let lastError: Error | null = null;
         
         for (let i = 0; i < attempts; i++) {
             try {
                 const privateKey = getPrivateKey(i);
-                const keyUsed = i < 3 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
+                const keyUsed = i < 2 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
                 
                 const address = privateKey.toAddress();
                 const allUtxos = await provider.listUnspent(address);
