@@ -19,8 +19,9 @@ dotenv.config({ path: envPath });
 export type EscrowDeployParams = {
     publicKeys: string[];
     lockTimeMin: bigint;
-    amount: number;
 };
+
+const amount = 100;
 
 export type EscrowDeploymentResult = {
     txId: string;
@@ -110,7 +111,7 @@ export async function deployEscrowContract(params: EscrowDeployParams): Promise<
                 const contract = new Escrowcontract(addresses, params.lockTimeMin);
                 await contract.connect(signer);
 
-                const deployTx = await contract.deploy(params.amount, {
+                const deployTx = await contract.deploy(amount, {
                     utxos: confirmedUtxos
                 });
 

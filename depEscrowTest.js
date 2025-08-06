@@ -1,12 +1,11 @@
 const { deployEscrowContract } = require('./escrowContract/dist/deployModule');
 require('dotenv').config();
 
-async function deployEscrow(publicKeys, lockTimeMin, amount) {
+async function deployEscrow(publicKeys, lockTimeMin) {
     try {
         const deployParams = {
             publicKeys: publicKeys,
-            lockTimeMin: BigInt(lockTimeMin),
-            amount: amount
+            lockTimeMin: BigInt(lockTimeMin)
         };
 
         const result = await deployEscrowContract(deployParams);
@@ -31,9 +30,9 @@ const publicKeys = [
 ];
 
 const lockTimeMin = 1748341000; // Timestamp Unix en segundos
-const amount = 100; // Satoshis a bloquear
+//const amount = 100; // Satoshis a bloquear
 
-deployEscrow(publicKeys, lockTimeMin, amount)
+deployEscrow(publicKeys, lockTimeMin)
     .then(result => {
         console.log('Escrow deployed successfully!');
         console.log('Transaction ID:', result.txId);

@@ -1,7 +1,6 @@
 export type EscrowDeployParams = {
     publicKeys: string[];
     lockTimeMin: bigint;
-    amount: number;
 };
 export type EscrowDeploymentResult = {
     txId: string;

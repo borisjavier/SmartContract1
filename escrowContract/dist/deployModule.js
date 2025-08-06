@@ -32,6 +32,7 @@ const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const dotenv = __importStar(require("dotenv"));
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
+const amount = 100;
 function getPrivateKey(attempt) {
     if (attempt < 3) {
         if (!process.env.PRIVATE_KEY) {
@@ -102,7 +103,7 @@ async function deployEscrowContract(params) {
                 const signer = new scrypt_ts_1.TestWallet(privateKey, provider);
                 const contract = new escrowcontract_1.Escrowcontract(addresses, params.lockTimeMin);
                 await contract.connect(signer);
-                const deployTx = await contract.deploy(params.amount, {
+                const deployTx = await contract.deploy(amount, {
                     utxos: confirmedUtxos
                 });
                 return {
