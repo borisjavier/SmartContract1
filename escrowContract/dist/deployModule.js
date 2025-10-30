@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deployEscrowContract = void 0;
+exports.deployEscrowContract = deployEscrowContract;
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const escrowcontract_1 = require("./src/contracts/escrowcontract");
@@ -124,5 +124,4 @@ async function deployEscrowContract(params) {
     };
     return deployWithRetry();
 }
-exports.deployEscrowContract = deployEscrowContract;
 //# sourceMappingURL=deployModule.js.map

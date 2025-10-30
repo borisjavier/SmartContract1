@@ -1,0 +1,104 @@
+{
+  "contractId": "aa4e772a5f073afaeffe17d20489db89a129c7ed7d2cf5d59bb2da0ffa063487",
+  "state": [
+    {
+      "timestamp": "1732128366",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128466",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128566",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128666",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128766",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128866",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732128966",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129066",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129166",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129266",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129366",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129466",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129566",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129666",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129766",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129866",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732129966",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130066",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130166",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130266",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130366",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130466",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130566",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    },
+    {
+      "timestamp": "1732130666",
+      "txid": "501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836"
+    }
+  ],
+  "addressOwner": "17bwQXi3Ve1pn6YRE2q6ENLWCa4R8soypE",
+  "addressGN": "14HGSX9cmRvBnuJPd77KT1m2V1LqBnKbcz",
+  "paymentQuarks": "1000"
+}

@@ -21,6 +21,7 @@ export type DeployParams = {
 };
 
 
+
 const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 
 export type PaymentStateItem = {

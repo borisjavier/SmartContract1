@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.payEscrowContract = void 0;
+exports.payEscrowContract = payEscrowContract;
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const escrowcontract_1 = require("./src/contracts/escrowcontract");
@@ -144,5 +144,4 @@ async function payEscrowContract(params) {
     };
     return callWithRetry();
 }
-exports.payEscrowContract = payEscrowContract;
 //# sourceMappingURL=payEscrowModule.js.map

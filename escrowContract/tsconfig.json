@@ -22,7 +22,7 @@
     "src/**/*.ts",
     "./deployModule.ts",
     "./payEscrowModule.ts",
-    "refundEscrowModule.ts"
+    "./refundEscrowModule.ts"
     ],
     "exclude": [
       "node_modules", "dist"
