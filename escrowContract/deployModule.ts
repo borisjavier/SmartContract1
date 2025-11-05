@@ -7,14 +7,29 @@ import {
     TestWallet,
     Addr,
     PubKey,
-    hash160
+    hash160, 
+    UTXO
 } from 'scrypt-ts';
-import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import * as dotenv from 'dotenv';
 
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
 
+
+const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
+
+function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
+    return utxos;
+}
+const woc_api_key = process.env.WOC_API_KEY;
+
+if (!woc_api_key) {
+    throw new Error("No \"WOC_API_KEY\" found in .env file");
+}
+
+const network = bsv.Networks.mainnet; // o bsv.Networks.testnet
+const provider = new GNProvider(network, woc_api_key);
 // Tipos para parámetros
 export type EscrowDeployParams = {
     publicKeys: string[];
@@ -25,26 +40,9 @@ const amount = 100;
 
 export type EscrowDeploymentResult = {
     txId: string;
-    keyUsed: string;
 };
 
-function getPrivateKey(attempt: number): bsv.PrivateKey {
-    if (attempt < 3) {
-        if (!process.env.PRIVATE_KEY) {
-            throw new Error("No \"PRIVATE_KEY\" found in .env");
-        }
-        return bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY);
-    } else {
-        if (!process.env.PRIVATE_KEY_2) {
-            throw new Error("No \"PRIVATE_KEY_2\" found in .env for final attempt");
-        }
-        return bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY_2);
-    }
-}
 
-function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter(utxo => utxo.height >= 0);
-}
 
 function validatePublicKeys(publicKeys: string[]): void {
     if (!Array.isArray(publicKeys) || publicKeys.length !== SIGS) {
@@ -68,10 +66,6 @@ function validatePublicKeys(publicKeys: string[]): void {
 }
 
 export async function deployEscrowContract(params: EscrowDeployParams): Promise<EscrowDeploymentResult> {
-    // Validaciones críticas
-    if (!process.env.WOC_API_KEY) {
-        throw new Error("WOC_API_KEY environment variable is not set");
-    }
     
     validatePublicKeys(params.publicKeys);
     
@@ -84,20 +78,18 @@ export async function deployEscrowContract(params: EscrowDeployParams): Promise<
     await Escrowcontract.loadArtifact(artifact);
 
     // Configurar provider
-    const provider = new GNProvider(bsv.Networks.mainnet, process.env.WOC_API_KEY);
+    //const provider = new GNProvider(bsv.Networks.mainnet, process.env.WOC_API_KEY);
     
     // Convertir public keys a formato de contrato
     const pubKeys = params.publicKeys.map(pk => PubKey(pk));
     const addresses = pubKeys.map(pk => Addr(hash160(pk))) as FixedArray<Addr, typeof SIGS>;
 
     // Función interna para reintentos
-    const deployWithRetry = async (attempts = 3, delay = 3000): Promise<EscrowDeploymentResult> => {
+    const deployWithRetry = async (attempts = 4, delay = 3000): Promise<EscrowDeploymentResult> => {
         let lastError: Error | null = null;
         
         for (let i = 0; i < attempts; i++) {
             try {
-                const privateKey = getPrivateKey(i);
-                const keyUsed = i < 2 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
                 
                 const address = privateKey.toAddress();
                 const allUtxos = await provider.listUnspent(address);
@@ -116,8 +108,7 @@ export async function deployEscrowContract(params: EscrowDeployParams): Promise<
                 });
 
                 return {
-                    txId: deployTx.id,
-                    keyUsed: keyUsed
+                    txId: deployTx.id
                 };
                 
             } catch (error) {

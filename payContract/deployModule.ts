@@ -1,10 +1,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
-import { bsv, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
+import { bsv, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill, UTXO } from 'scrypt-ts';
 import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
-import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
@@ -40,8 +40,8 @@ export type DeploymentResult = {
     paymentQuarks: bigint;
 };
 
-function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter(utxo => utxo.height >= 0);
+function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
+    return utxos
 }
 
 
@@ -155,27 +155,6 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     };
     
 }
-
-
-/*async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
-              if(n == N) {
-                const fechas = fill(0n, n) as unknown as FixedArray<Timestamp, typeof N>;
-                console.log('fechas antes de: ', fechas)
-
-                for (let i = 0; i < n; i++) {
-                    const fecha = BigInt(fechaInicio + i * l);
-                    console.log('fecha: ', fecha)
-                    fechas[i] = BigInt(fecha);
-                }
-
-                console.log('fechas después de: ', fechas);
-
-                return fechas;
-              } else {
-                throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`)
-              } 
-                
-            }*/
 
 async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
     // Verificar compatibilidad de tamaños

@@ -6,51 +6,43 @@ import {
     findSigs,
     MethodCallOptions,
     PubKey,
-    TestWallet
+    TestWallet, 
+    UTXO
 } from 'scrypt-ts';
-import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import * as dotenv from 'dotenv';
 
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
 
+const woc_api_key = process.env.WOC_API_KEY;
+const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
+const network = bsv.Networks.mainnet;
+const provider = new GNProvider(network, woc_api_key);
+
+if (!woc_api_key) {
+    throw new Error("No \"WOC_API_KEY\" found in .env file");
+}
+
 // Tipos para parámetros
 export type PayEscrowParams = {
     txId: string;
-    deployerKeyType: 'PRIVATE_KEY' | 'PRIVATE_KEY_2';
     participantKeys: string[];
     atOutputIndex?: number;
 };
 
 export type PayEscrowResult = {
     txId: string;
-    usedKeyType: string;
 };
 
-function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter(utxo => utxo.height >= 0);
-}
-
-function sanitizePrivateKey(key: string | undefined): bsv.PrivateKey {
-    if (!key) throw new Error("Private key is undefined");
-    const cleanKey = key.replace(/["';\\\s]/g, '');
-    try {
-        return bsv.PrivateKey.fromWIF(cleanKey);
-    } catch (error) {
-        throw new Error(`Invalid private key format: ${cleanKey.substring(0, 6)}...`);
-    }
+function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
+    return utxos;
 }
 
 export async function payEscrowContract(params: PayEscrowParams): Promise<PayEscrowResult> {
-    // Validaciones críticas
-    if (!process.env.WOC_API_KEY) {
-        throw new Error("WOC_API_KEY environment variable is not set");
-    }
-    if (!process.env[params.deployerKeyType]) {
-        throw new Error(`Deployer key ${params.deployerKeyType} not found in .env`);
-    }
+
     if (!params.participantKeys || params.participantKeys.length === 0) {
-        throw new Error("Participant keys are required");
+        throw new Error(`Participant keys are required. We have ${JSON.stringify(params.participantKeys)}`);
     }
 
     // Cargar artefacto
@@ -60,9 +52,6 @@ export async function payEscrowContract(params: PayEscrowParams): Promise<PayEsc
     }
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
     await Escrowcontract.loadArtifact(artifact);
-
-    // Configurar provider
-    const provider = new GNProvider(bsv.Networks.mainnet, process.env.WOC_API_KEY);
 
     const callWithRetry = async (maxAttempts = 4, initialDelay = 3000): Promise<PayEscrowResult> => {
         let lastError: Error | null = null;
@@ -74,39 +63,22 @@ export async function payEscrowContract(params: PayEscrowParams): Promise<PayEsc
                 // Reconstruir la instancia del contrato desde la transacción existente
                 const instance = Escrowcontract.fromTx(txResponse, params.atOutputIndex || 0);
 
-                const deployerPrivateKey = sanitizePrivateKey(process.env[params.deployerKeyType]);
-                const additionalKey = sanitizePrivateKey(process.env.PRIVATE_KEY_3);
-                if (!additionalKey) {
-                    throw new Error("Additional key (PRIVATE_KEY_3) not found in .env");
-                }
-                const participantPrivateKeys = params.participantKeys.map(wif => {
+                const allPrivateKeys = [privateKey];
+                
+                // Agregar claves de participantes
+                params.participantKeys.forEach(wif => {
                     try {
-                        return bsv.PrivateKey.fromWIF(wif);
+                        if (wif && wif.trim() !== '') {
+                            allPrivateKeys.push(bsv.PrivateKey.fromWIF(wif.trim()));
+                        }
                     } catch (error) {
-                        throw new Error(`Invalid participant key: ${wif.substring(0, 6)}...`);
+                        console.error(`Invalid participant key: ${wif.substring(0, 6)}...`);
                     }
                 });
-                
-                let allPrivateKeys;
-                if (params.deployerKeyType === "PRIVATE_KEY") {
-                    allPrivateKeys = [
-                        deployerPrivateKey,   // PRIVATE_KEY (primera)
-                        additionalKey,        // PRIVATE_KEY_3 (segunda)
-                        ...participantPrivateKeys
-                    ];
-                } else if (params.deployerKeyType === "PRIVATE_KEY_2") {
-                    allPrivateKeys = [
-                        additionalKey,        // PRIVATE_KEY_3 (primera)
-                        deployerPrivateKey,   // PRIVATE_KEY_2 (segunda)
-                        ...participantPrivateKeys
-                    ];
-                } else {
-                    throw new Error(`Tipo de clave de despliegue inválido: ${params.deployerKeyType}`);
-                }
                 const publicKeys = allPrivateKeys.map(pk => pk.publicKey);
 
                 // Obtener UTXOs para el signer
-                const address = deployerPrivateKey.toAddress();
+                const address = privateKey.toAddress();
                 const allUtxos = await provider.listUnspent(address);
                 const confirmedUtxos = getConfirmedUtxos(allUtxos);
 
@@ -127,8 +99,7 @@ export async function payEscrowContract(params: PayEscrowParams): Promise<PayEsc
 
                 console.log('✅ Escrow contract pay method called successfully: ', unlockTx.id);
                 return {
-                    txId: unlockTx.id,
-                    usedKeyType: params.deployerKeyType
+                    txId: unlockTx.id
                 };
 
             } catch (error) {

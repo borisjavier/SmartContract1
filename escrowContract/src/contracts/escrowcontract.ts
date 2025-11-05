@@ -7,12 +7,11 @@ import {
     Addr,
     Sig,
     PubKey,
-    hash160,
-    Ripemd160
+    hash160
 } from 'scrypt-ts'
 
-export const SIGS = 5;
-const nec = SIGS - 2;
+export const SIGS = 4;
+const nec = SIGS - 1;
 
 export class Escrowcontract extends SmartContract {
     @prop()
@@ -29,47 +28,36 @@ export class Escrowcontract extends SmartContract {
 
     @method()
     public pay(signatures: FixedArray<Sig, typeof SIGS>, publicKeys: FixedArray<PubKey, typeof SIGS>) {
-        let validAddsCount = 0n;
-        let validSignaturesCount = 0n;
+
+        let validSigs = 0n
         for (let i = 0; i < SIGS; i++) {
-            const pubKeyHash: Ripemd160 = hash160(publicKeys[i])
-            if (pubKeyHash == this.addresses[i]) {
-                console.log(`${pubKeyHash} debería ser igual a ${this.addresses[i]}`)
-                validAddsCount++;
+            // Primero verifica que la public key sea de una dirección autorizada
+            if (hash160(publicKeys[i]) == this.addresses[i]) {
+                // Luego verifica que la firma sea válida para ESA public key
+                if (this.checkSig(signatures[i], publicKeys[i])) {
+                    validSigs++
+                }
             }
-            if (this.checkSig(signatures[i], publicKeys[i])) {
-                validSignaturesCount++;
-            }            
         }
-        
-        assert(validAddsCount >= nec, 'Addresses mismatch or insufficient signers')
-        assert(validSignaturesCount >= nec, 'Not enough valid signatures')
+        assert(validSigs >= nec, `not enough valid signatures, only ${validSigs} passed.`)
 
     }
 
     @method()
     public refundDeadline(signatures: FixedArray<Sig, typeof SIGS>, publicKeys: FixedArray<PubKey, typeof SIGS>) {
-        
 
-        const pubKeyHash: Ripemd160 = hash160(publicKeys[1])
-        assert(pubKeyHash == this.addresses[1], 'Addresses mismatch')
-
-        let validSignaturesCount = 0n;
-        let validAddsCount = 0n;
-
+        let validSigs = 0n
         for (let i = 0; i < SIGS; i++) {
-            const pubKeyHash: Ripemd160 = hash160(publicKeys[i])
-            if (pubKeyHash == this.addresses[i]) {
-                console.log(`${pubKeyHash} debería ser igual a ${this.addresses[i]}`)
-                validAddsCount++;
-            }
-            if (this.checkSig(signatures[i], publicKeys[i])) {
-                validSignaturesCount++;
+            // Primero verifica que la public key sea de una dirección autorizada
+            if (hash160(publicKeys[i]) == this.addresses[i]) {
+                // Luego verifica que la firma sea válida para ESA public key
+                if (this.checkSig(signatures[i], publicKeys[i])) {
+                    validSigs++
+                }
             }
         }
+        assert(validSigs >= nec, `not enough valid signatures, only ${validSigs} passed.`)
 
-        assert(validSignaturesCount >= nec, 'Not enough valid signatures')
-        assert(validAddsCount >= nec, 'Addresses mismatch or insufficient signers')
         assert(this.timeLock(this.matureTime), 'deadline not yet reached')       
 
     }

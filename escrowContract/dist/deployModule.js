@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deployEscrowContract = deployEscrowContract;
+exports.deployEscrowContract = void 0;
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const escrowcontract_1 = require("./src/contracts/escrowcontract");
@@ -32,24 +32,17 @@ const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const dotenv = __importStar(require("dotenv"));
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
-const amount = 100;
-function getPrivateKey(attempt) {
-    if (attempt < 3) {
-        if (!process.env.PRIVATE_KEY) {
-            throw new Error("No \"PRIVATE_KEY\" found in .env");
-        }
-        return scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY);
-    }
-    else {
-        if (!process.env.PRIVATE_KEY_2) {
-            throw new Error("No \"PRIVATE_KEY_2\" found in .env for final attempt");
-        }
-        return scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY_2);
-    }
-}
+const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 function getConfirmedUtxos(utxos) {
-    return utxos.filter(utxo => utxo.height >= 0);
+    return utxos;
 }
+const woc_api_key = process.env.WOC_API_KEY;
+if (!woc_api_key) {
+    throw new Error("No \"WOC_API_KEY\" found in .env file");
+}
+const network = scrypt_ts_1.bsv.Networks.mainnet; // o bsv.Networks.testnet
+const provider = new gn_provider_1.GNProvider(network, woc_api_key);
+const amount = 100;
 function validatePublicKeys(publicKeys) {
     if (!Array.isArray(publicKeys) || publicKeys.length !== escrowcontract_1.SIGS) {
         throw new Error(`publicKeys must be an array of exactly ${escrowcontract_1.SIGS} elements`);
@@ -70,10 +63,6 @@ function validatePublicKeys(publicKeys) {
     });
 }
 async function deployEscrowContract(params) {
-    // Validaciones críticas
-    if (!process.env.WOC_API_KEY) {
-        throw new Error("WOC_API_KEY environment variable is not set");
-    }
     validatePublicKeys(params.publicKeys);
     // Cargar artefacto
     const artifactPath = path.resolve(__dirname, '../artifacts/escrowcontract.json');
@@ -83,17 +72,15 @@ async function deployEscrowContract(params) {
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
     await escrowcontract_1.Escrowcontract.loadArtifact(artifact);
     // Configurar provider
-    const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, process.env.WOC_API_KEY);
+    //const provider = new GNProvider(bsv.Networks.mainnet, process.env.WOC_API_KEY);
     // Convertir public keys a formato de contrato
     const pubKeys = params.publicKeys.map(pk => (0, scrypt_ts_1.PubKey)(pk));
     const addresses = pubKeys.map(pk => (0, scrypt_ts_1.Addr)((0, scrypt_ts_1.hash160)(pk)));
     // Función interna para reintentos
-    const deployWithRetry = async (attempts = 3, delay = 3000) => {
+    const deployWithRetry = async (attempts = 4, delay = 3000) => {
         let lastError = null;
         for (let i = 0; i < attempts; i++) {
             try {
-                const privateKey = getPrivateKey(i);
-                const keyUsed = i < 2 ? 'PRIVATE_KEY' : 'PRIVATE_KEY_2';
                 const address = privateKey.toAddress();
                 const allUtxos = await provider.listUnspent(address);
                 const confirmedUtxos = getConfirmedUtxos(allUtxos);
@@ -107,8 +94,7 @@ async function deployEscrowContract(params) {
                     utxos: confirmedUtxos
                 });
                 return {
-                    txId: deployTx.id,
-                    keyUsed: keyUsed
+                    txId: deployTx.id
                 };
             }
             catch (error) {
@@ -124,4 +110,5 @@ async function deployEscrowContract(params) {
     };
     return deployWithRetry();
 }
+exports.deployEscrowContract = deployEscrowContract;
 //# sourceMappingURL=deployModule.js.map

@@ -4,6 +4,5 @@ export type EscrowDeployParams = {
 };
 export type EscrowDeploymentResult = {
     txId: string;
-    keyUsed: string;
 };
 export declare function deployEscrowContract(params: EscrowDeployParams): Promise<EscrowDeploymentResult>;

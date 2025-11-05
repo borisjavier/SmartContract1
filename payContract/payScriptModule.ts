@@ -2,8 +2,8 @@
 import { PaymentContract, Payment, N } from './src/contracts/paycontract';//Timestamp,
 import * as path from 'path';
 import * as fs from 'fs';
-import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, ByteString } from 'scrypt-ts';
-import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
+import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, ByteString, UTXO } from 'scrypt-ts';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import * as dotenv from 'dotenv';
 
 // Cargar el archivo .env
@@ -51,8 +51,8 @@ function filledTxids(dataPayments: Payment[], tx0: ByteString): boolean {
     return true;
 }
 
-function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter(utxo => utxo.height >= 0);
+function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
+    return utxos
 }
 
 

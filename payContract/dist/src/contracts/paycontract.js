@@ -8,7 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentContract = exports.N = void 0;
 const scrypt_ts_1 = require("scrypt-ts");
-exports.N = 6;
+exports.N = 24;
 class PaymentContract extends scrypt_ts_1.SmartContract {
     constructor(owner, adminPubKey, addressGN, amountGN, qtyTokens, datas, txids) {
         super(...arguments);

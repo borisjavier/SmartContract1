@@ -1,49 +1,37 @@
 
 contract Escrowcontract {
-  const Ripemd160[5] addresses;
+  const Ripemd160[4] addresses;
   const int matureTime;
   int __scrypt_ts_ctx_locktime;
   int __scrypt_ts_ctx_sequence;
-  constructor(Ripemd160[5] addresses, int matureTime) {
+  constructor(Ripemd160[4] addresses, int matureTime) {
     this.addresses = addresses;
     this.matureTime = matureTime;
   }
-  public function pay(Sig[5] signatures, PubKey[5] publicKeys) {
-    int validAddsCount = 0;
-    int validSignaturesCount = 0;
-    loop (5) : i {
-        Ripemd160 pubKeyHash = hash160(publicKeys[i]);
-        if(pubKeyHash == this.addresses[i]) {
-          
-          validAddsCount++;
-        }
-        if(checkSig(signatures[i], publicKeys[i])) {
-          validSignaturesCount++;
+  public function pay(Sig[4] signatures, PubKey[4] publicKeys) {
+    int validSigs = 0;
+    loop (4) : i {
+        if(hash160(publicKeys[i]) == this.addresses[i]) {
+          if(checkSig(signatures[i], publicKeys[i])) {
+            validSigs++;
+          }
         }
       }
-    require(validAddsCount >= 3);
-    require(validSignaturesCount >= 3);
+    require(validSigs >= 3);
   }
-  public function refundDeadline(Sig[5] signatures, PubKey[5] publicKeys, SigHashPreimage __scrypt_ts_txPreimage) {
+  public function refundDeadline(Sig[4] signatures, PubKey[4] publicKeys, SigHashPreimage __scrypt_ts_txPreimage) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
     this.__scrypt_ts_ctx_locktime = SigHash.nLocktime(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_sequence = SigHash.nSequence(__scrypt_ts_txPreimage);
-    Ripemd160 pubKeyHash = hash160(publicKeys[1]);
-    require(pubKeyHash == this.addresses[1]);
-    int validSignaturesCount = 0;
-    int validAddsCount = 0;
-    loop (5) : i {
-        Ripemd160 pubKeyHash = hash160(publicKeys[i]);
-        if(pubKeyHash == this.addresses[i]) {
-          
-          validAddsCount++;
-        }
-        if(checkSig(signatures[i], publicKeys[i])) {
-          validSignaturesCount++;
+    int validSigs = 0;
+    loop (4) : i {
+        if(hash160(publicKeys[i]) == this.addresses[i]) {
+          if(checkSig(signatures[i], publicKeys[i])) {
+            validSigs++;
+          }
         }
       }
-    require(validSignaturesCount >= 3);
-    require(validAddsCount >= 3);
+    require(validSigs >= 3);
     require(this.timeLock(this.matureTime));
   }
   function timeLock(int locktime): bool {  bool res = true;  res = this.__scrypt_ts_ctx_sequence < 0xffffffff;  if (    locktime < 500000000  ) {    res = res && this.__scrypt_ts_ctx_locktime < 500000000;  }  return res && this.__scrypt_ts_ctx_locktime >= locktime;}

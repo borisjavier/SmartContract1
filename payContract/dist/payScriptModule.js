@@ -47,7 +47,7 @@ function filledTxids(dataPayments, tx0) {
     return true;
 }
 function getConfirmedUtxos(utxos) {
-    return utxos.filter(utxo => utxo.height >= 0);
+    return utxos;
 }
 const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 async function pay(params) {
