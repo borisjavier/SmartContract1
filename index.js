@@ -118,7 +118,6 @@ app.post('/payEsc', async (req, res) => {
 
         const payParams = {
             txId: txId,
-            deployerKeyType: deployerKeyType,
             participantKeys: participantKeys,
             atOutputIndex: atOutputIndex || 0
         };
@@ -151,7 +150,6 @@ app.post('/callRefund', async (req, res) => {
 
         const refundParams = {
             txId: txId,
-            deployerKeyType: deployerKeyType,
             participantKeys: participantKeys,
             atOutputIndex: atOutputIndex || 0
         };
