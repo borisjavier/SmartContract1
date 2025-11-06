@@ -82,7 +82,7 @@ app.post('/transfer', async (req, res) => {
 
 
 app.post('/depEscrow', async (req, res) => {
-  const { publicKeys, lockTimeMin } = req.body;
+  const { publicKeys, lockTimeMin, pk } = req.body;
   try {
         if (!publicKeys || !Array.isArray(publicKeys) || publicKeys.length === 0) {
           return res.status(400).json({ error: "publicKeys inválido" });
@@ -93,7 +93,8 @@ app.post('/depEscrow', async (req, res) => {
     
         const deployParams = {
             publicKeys: publicKeys,
-            lockTimeMin: lockTimeMin
+            lockTimeMin: lockTimeMin,
+            contractPK: pk
         };
         await mutex.runExclusive(async () => {
           const result = await deployEscrowContract(deployParams);
@@ -119,7 +120,8 @@ app.post('/payEsc', async (req, res) => {
         const payParams = {
             txId: txId,
             participantKeys: participantKeys,
-            atOutputIndex: atOutputIndex || 0
+            atOutputIndex: atOutputIndex || 0,
+            contractPK: pk
         };
 
         // Usamos mutex para exclusión mutua
@@ -151,7 +153,8 @@ app.post('/callRefund', async (req, res) => {
         const refundParams = {
             txId: txId,
             participantKeys: participantKeys,
-            atOutputIndex: atOutputIndex || 0
+            atOutputIndex: atOutputIndex || 0,
+            contractPK: pk
         };
 
         // Usamos mutex para exclusión mutua

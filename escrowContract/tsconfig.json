@@ -20,16 +20,11 @@
     "declaration": true,
     "resolveJsonModule": true
   },
-    "include": [
+  "include": [
     "src/**/*.ts",
     "./deployModule.ts",
     "./payEscrowModule.ts",
     "./refundEscrowModule.ts"
-    ],
-    "exclude": [
-      "node_modules", "dist"
-    ]
+  ],
+  "exclude": ["node_modules", "dist"]
 }
-
-
-

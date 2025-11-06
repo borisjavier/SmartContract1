@@ -23,7 +23,7 @@ describe('Test SmartContract `Escrowcontract`', () => {
             const callRes = await instance.methods.unlock(
                 toByteString('hello world', true)
             )
-            
+
             console.log(`Called "unlock" method: ${callRes.tx.id}`)
         }
         await expect(call()).not.to.be.rejected
@@ -32,7 +32,8 @@ describe('Test SmartContract `Escrowcontract`', () => {
     it('should throw with wrong message.', async () => {
         await instance.deploy(1)
 
-        const call = async () => instance.methods.unlock(toByteString('wrong message', true))
+        const call = async () =>
+            instance.methods.unlock(toByteString('wrong message', true))
         await expect(call()).to.be.rejectedWith(/Hash does not match/)
     })
 })

@@ -7,11 +7,11 @@ import {
     Addr,
     Sig,
     PubKey,
-    hash160
+    hash160,
 } from 'scrypt-ts'
 
-export const SIGS = 4;
-const nec = SIGS - 1;
+export const SIGS = 4
+const nec = SIGS - 1
 
 export class Escrowcontract extends SmartContract {
     @prop()
@@ -22,13 +22,15 @@ export class Escrowcontract extends SmartContract {
 
     constructor(addresses: FixedArray<Addr, typeof SIGS>, matureTime: bigint) {
         super(...arguments)
-        this.addresses = addresses;
-        this.matureTime = matureTime;
+        this.addresses = addresses
+        this.matureTime = matureTime
     }
 
     @method()
-    public pay(signatures: FixedArray<Sig, typeof SIGS>, publicKeys: FixedArray<PubKey, typeof SIGS>) {
-
+    public pay(
+        signatures: FixedArray<Sig, typeof SIGS>,
+        publicKeys: FixedArray<PubKey, typeof SIGS>
+    ) {
         let validSigs = 0n
         for (let i = 0; i < SIGS; i++) {
             // Primero verifica que la public key sea de una dirección autorizada
@@ -39,13 +41,17 @@ export class Escrowcontract extends SmartContract {
                 }
             }
         }
-        assert(validSigs >= nec, `not enough valid signatures, only ${validSigs} passed.`)
-
+        assert(
+            validSigs >= nec,
+            `not enough valid signatures, only ${validSigs} passed.`
+        )
     }
 
     @method()
-    public refundDeadline(signatures: FixedArray<Sig, typeof SIGS>, publicKeys: FixedArray<PubKey, typeof SIGS>) {
-
+    public refundDeadline(
+        signatures: FixedArray<Sig, typeof SIGS>,
+        publicKeys: FixedArray<PubKey, typeof SIGS>
+    ) {
         let validSigs = 0n
         for (let i = 0; i < SIGS; i++) {
             // Primero verifica que la public key sea de una dirección autorizada
@@ -56,10 +62,11 @@ export class Escrowcontract extends SmartContract {
                 }
             }
         }
-        assert(validSigs >= nec, `not enough valid signatures, only ${validSigs} passed.`)
+        assert(
+            validSigs >= nec,
+            `not enough valid signatures, only ${validSigs} passed.`
+        )
 
-        assert(this.timeLock(this.matureTime), 'deadline not yet reached')       
-
+        assert(this.timeLock(this.matureTime), 'deadline not yet reached')
     }
-    
 }
