@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
-  const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;
+  const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = JSON.parse(req.body);
   
   try {
     await mutex.runExclusive(async () => {
@@ -43,7 +43,7 @@ app.post('/gen-contract', async (req, res) => {
 
 // Endpoint para desplegar un contrato
 app.post('/pay', async (req, res) => {
-  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;
+  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = JSON.parse(req.body);
 
   try {
     await mutex.runExclusive(async () => {
@@ -82,7 +82,7 @@ app.post('/transfer', async (req, res) => {
 
 
 app.post('/depEscrow', async (req, res) => {
-  const { publicKeys, lockTimeMin, pk } = req.body;
+  const { publicKeys, lockTimeMin, pk } = JSON.parse(req.body);
   try {
         if (!publicKeys || !Array.isArray(publicKeys) || publicKeys.length === 0) {
           return res.status(400).json({ error: "publicKeys inválido" });
@@ -110,7 +110,7 @@ app.post('/depEscrow', async (req, res) => {
 })
 
 app.post('/payEsc', async (req, res) => {
-    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    const { txId, deployerKeyType, participantKeys, atOutputIndex } = JSON.parse(req.body);
     try {
         // Validación básica
         if (!txId || !deployerKeyType || !participantKeys) {
@@ -143,7 +143,7 @@ app.post('/payEsc', async (req, res) => {
 });
 
 app.post('/callRefund', async (req, res) => {
-    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    const { txId, deployerKeyType, participantKeys, atOutputIndex } = JSON.parse(req.body);
     try {
         // Validación básica
         if (!txId || !deployerKeyType || !participantKeys) {
