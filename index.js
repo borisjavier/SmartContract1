@@ -98,7 +98,7 @@ app.post('/depEscrow', async (req, res) => {
         const deployParams = {
             publicKeys: publicKeys,
             lockTimeMin: lockTimeMin,
-            contractPK: pk
+            contractPK: contractPK
         };
         await mutex.runExclusive(async () => {
           const result = await deployEscrowContract(deployParams);
@@ -114,10 +114,10 @@ app.post('/depEscrow', async (req, res) => {
 })
 
 app.post('/payEsc', async (req, res) => {
-    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    const { txId, participantKeys, atOutputIndex, contractPK } = req.body;
     try {
         // Validación básica
-        if (!txId || !deployerKeyType || !participantKeys) {
+        if (!txId || !contractPK || !participantKeys) {
             return res.status(400).json({ error: "Missing required parameters" });
         }
 
@@ -125,7 +125,7 @@ app.post('/payEsc', async (req, res) => {
             txId: txId,
             participantKeys: participantKeys,
             atOutputIndex: atOutputIndex || 0,
-            contractPK: pk
+            contractPK: contractPK
         };
 
         // Usamos mutex para exclusión mutua
@@ -147,10 +147,10 @@ app.post('/payEsc', async (req, res) => {
 });
 
 app.post('/callRefund', async (req, res) => {
-    const { txId, deployerKeyType, participantKeys, atOutputIndex } = req.body;
+    const { txId, participantKeys, atOutputIndex, contractPK } = req.body;
     try {
         // Validación básica
-        if (!txId || !deployerKeyType || !participantKeys) {
+        if (!txId || !contractPK || !participantKeys) {
             return res.status(400).json({ error: "Missing required parameters" });
         }
 
@@ -158,7 +158,7 @@ app.post('/callRefund', async (req, res) => {
             txId: txId,
             participantKeys: participantKeys,
             atOutputIndex: atOutputIndex || 0,
-            contractPK: pk
+            contractPK: contractPK
         };
 
         // Usamos mutex para exclusión mutua
