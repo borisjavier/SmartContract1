@@ -100,16 +100,22 @@ app.post('/depEscrow', async (req, res) => {
             lockTimeMin: lockTimeMin,
             contractPK: contractPK
         };
+
+        let deploymentResult;
         await mutex.runExclusive(async () => {
-          const result = await deployEscrowContract(deployParams);
-          return {
-            txId: result.txId,
-            keyUsed: result.keyUsed
-          };
+          deploymentResult = await deployEscrowContract(deployParams);
+        });
+        console.log('Deployment successful, sending response:', deploymentResult);
+        res.status(200).json({
+          txId: deploymentResult.txId,
+          success: true
         });
     } catch (error) {
         console.error('Error deploying escrow contract:', error);
-        throw new Error(`Escrow deployment failed: ${error.message}`);
+        res.status(500).json({ 
+          error: `Escrow deployment failed: ${error.message}`,
+          success: false
+        });
     }
 })
 
@@ -133,8 +139,7 @@ app.post('/payEsc', async (req, res) => {
             const result = await payEscrowContract(payParams);
             res.status(200).json({
                 message: 'Escrow payment successful',
-                txId: result.txId,
-                usedKeyType: result.usedKeyType
+                txId: result.txId
             });
         });
     } catch (error) {
@@ -166,8 +171,7 @@ app.post('/callRefund', async (req, res) => {
             const result = await refundEscrowContract(refundParams);
             res.status(200).json({
                 message: 'Escrow refund successful',
-                txId: result.txId,
-                usedKeyType: result.usedKeyType
+                txId: result.txId
             });
         });
     } catch (error) {
