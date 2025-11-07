@@ -82,11 +82,11 @@ app.post('/transfer', async (req, res) => {
 
 
 app.post('/depEscrow', async (req, res) => {
-  const { publicKeys, lockTimeMin, pk } = req.body;
+  const { publicKeys, lockTimeMin, contractPK } = req.body;
 
-  console.log('Received contractPK:', typeof pk, pk);
+  console.log('Received contractPK:', typeof contractPK, contractPK);
   console.log('Received lockTimeMin:', typeof lockTimeMin, lockTimeMin);
-  
+
   try {
         if (!publicKeys || !Array.isArray(publicKeys) || publicKeys.length === 0) {
           return res.status(400).json({ error: "publicKeys inválido" });
