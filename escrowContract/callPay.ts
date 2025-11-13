@@ -6,11 +6,11 @@ import {
     PubKey,
     TestWallet,
     SignatureResponse,
+    UTXO
 } from 'scrypt-ts'
 
 import {
-    GNProvider,
-    UTXOWithHeight,
+    GNProvider
 } from 'scrypt-ts/dist/providers/gn-provider'
 
 import * as dotenv from 'dotenv'
@@ -18,8 +18,8 @@ import * as dotenv from 'dotenv'
 // Load the .env file
 dotenv.config()
 
-function getConfirmedUtxos(utxos: UTXOWithHeight[]): UTXOWithHeight[] {
-    return utxos.filter((utxo) => utxo.height >= 0)
+function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
+    return utxos;
 }
 const woc_api_key = process.env.WOC_API_KEY
 if (!woc_api_key) {

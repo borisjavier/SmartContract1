@@ -51,11 +51,6 @@ async function main() {
         ), //PURSE
         PubKey(
             bsv.PublicKey.fromString(
-                '02776014836ed5fc5e08cb66468ada039af0cb81c1b21e21a4a2bb58d3238bbd7d'
-            ).toHex()
-        ), //ADMIN
-        PubKey(
-            bsv.PublicKey.fromString(
                 '0349dbb90d3392b029b35567f087694328028e9e5f1188601da0c8b330d40ae64a'
             ).toHex()
         ), //ALICE

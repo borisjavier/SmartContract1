@@ -1,12 +1,13 @@
 const { refundEscrowContract } = require('./escrowContract/dist/refundEscrowModule');
 require('dotenv').config();
 
-async function testRefundEscrow(txId, participantKeys, atOutputIndex) {
+async function testRefundEscrow(txId, participantKeys, atOutputIndex, contractPK) {
     try {
         const refundParams = {
             txId: txId,
             participantKeys: participantKeys,
-            atOutputIndex: atOutputIndex || 0
+            atOutputIndex: atOutputIndex || 0,
+            contractPK: contractPK
         };
 
         const result = await refundEscrowContract(refundParams);
@@ -21,14 +22,13 @@ async function testRefundEscrow(txId, participantKeys, atOutputIndex) {
 }
 
 // Parámetros de ejemplo (reemplazar con valores reales)
-const DEPLOYED_CONTRACT_TXID = '4d592c84ddcf2e15239ed467ecf24cc3bef765042e9ab4bd7454bacd47a26eff'; //'aee5eb935252198e995034d52511df8455b9b7233794cea7460e7a9ae83e47bb' //'312e806637d55d2efee4d5ff9fc63764ae326dae456a082f164fbdb0bf7901e5'; // Reemplazar con el txid del contrato desplegado
-const PARTICIPANT_KEYS = [ 'KxgAsLj2Db5wanVL9bahW7ETAWm9ujyYouGxyR1p4MDPxpVvf6tY',
-    'Kz3EyUNUNisjjXcKfNkRyvKFViM2tKrQzbE8qoXmmskJ2jawe5M8', 'L1jeCD1urUGLhK5EMv4zxwei2BaQJpQhWikAcP3m5ZWz6oDHdSyX', 
-];
+const DEPLOYED_CONTRACT_TXID = 'bc649d9a2915c631a8e7b4e1517a61fee969a63497440da65e6791e4fec284c3'; //'aee5eb935252198e995034d52511df8455b9b7233794cea7460e7a9ae83e47bb' //'312e806637d55d2efee4d5ff9fc63764ae326dae456a082f164fbdb0bf7901e5'; // Reemplazar con el txid del contrato desplegado
+const PARTICIPANT_KEYS = ['KxgAsLj2Db5wanVL9bahW7ETAWm9ujyYouGxyR1p4MDPxpVvf6tY','L4vVk66WtWXimu7oyMtRn5uWb8zStK7QMsUKW5awCBW617gLE7oW','L1jeCD1urUGLhK5EMv4zxwei2BaQJpQhWikAcP3m5ZWz6oDHdSyX']
 
 const AT_OUTPUT_INDEX = 0; // Índice de salida donde está el contrato
+const CONTRACT_PK = 'L3ACtYZxJwMNs4h8pagNsC2B8t7iWB6Zk4Ffb2o65qYakkHdPmqb';
 
-testRefundEscrow(DEPLOYED_CONTRACT_TXID, PARTICIPANT_KEYS, AT_OUTPUT_INDEX)
+testRefundEscrow(DEPLOYED_CONTRACT_TXID, PARTICIPANT_KEYS, AT_OUTPUT_INDEX, CONTRACT_PK)
     .then(result => {
         console.log('Escrow refund successful!');
         console.log('Transaction ID:', result.txId);
