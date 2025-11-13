@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "gn-provider": "^1.2.5",
+    "gn-provider": "^1.2.6",
     "scrypt-ts": "latest"
   },
   "devDependencies": {
