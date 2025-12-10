@@ -7,7 +7,7 @@ const execPromise = util.promisify(exec);
 require('dotenv').config();
 const contractDir = path.resolve(__dirname, './payContract');
 
-async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks, deployContractFunction) {
+async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKey, quarks, purse, deployContractFunction) {
    try {  
     console.log(`ownerPubKey: ${ownerPubKey}, ownerGNKey: ${ownerGNKey}, quarks: ${quarks}`) 
     if (!process.env.PRIVATE_KEY) {
@@ -20,7 +20,8 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
       startDate: startDate,
       ownerPub: ownerPubKey,
       ownerGN: ownerGNKey,
-      quarks: quarks
+      quarks: quarks,
+      purse: purse
     };
 
     const result = await deployContractFunction(deployParams);
@@ -45,7 +46,7 @@ async function createDeploy(size, qtyT, lapse, startDate, ownerPubKey, ownerGNKe
 
 let deployContractFromModule = null;
 
-          async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
+          async function prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse) {
             try {
                 const { tsSize, jsonSize } = await getDataPaymentsSize();
                  console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
@@ -93,7 +94,7 @@ let deployContractFromModule = null;
                 }
                 // Llamar a `createDeploy` para realizar el despliegue del contrato
                 console.log('Llamando createDeploy...');
-                const result = await createDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks,
+                const result = await createDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse,
       deployContractFromModule);
                 console.log('Contrato desplegado exitosamente.');
                 return result;
@@ -103,10 +104,10 @@ let deployContractFromModule = null;
             }
         }
         
-        async function runDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks) {
+        async function runDeploy(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse) {
             try {
                 // Llamamos a `prepareDeployment` y esperamos el resultado
-                const result = await prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks);
+                const result = await prepareDeployment(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse);
         
                 // Verificamos que el resultado sea válido
                 if (result && typeof result === 'object' && result.contractId) {

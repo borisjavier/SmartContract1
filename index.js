@@ -16,11 +16,11 @@ app.use(express.json());
 
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
-  const { size, tokens, lapso, start, pubOwner, pubGN, quarks } = req.body;
+  const { size, tokens, lapso, start, pubOwner, pubGN, quarks, purse } = req.body;
   
   try {
     await mutex.runExclusive(async () => {
-      const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks);
+      const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse);
       if (result && typeof result === 'object' && result.contractId) {
         res.status(200).json({
           message: 'Contrato generado exitosamente',
@@ -43,11 +43,11 @@ app.post('/gen-contract', async (req, res) => {
 
 // Endpoint para desplegar un contrato
 app.post('/pay', async (req, res) => {
-  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey } = req.body;
+  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse } = req.body;
 
   try {
     await mutex.runExclusive(async () => {
-      const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
+      const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse);
       if (result && typeof result === 'object' && result.lastStateTxid) {
         res.status(200).json({
           message: 'Se ha efectuado un pago en el contrato.',

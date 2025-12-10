@@ -6,6 +6,7 @@ export type DeployParams = {
     ownerPub: string;
     ownerGN: string;
     quarks: number;
+    purse: string;
 };
 export type PaymentStateItem = {
     timestamp: string;

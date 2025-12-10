@@ -18,7 +18,8 @@ export type PayParams = {
     txids: string[];//FixedArray<string, typeof N>; ////
     txidPago: string,
     qtyTokens: number,
-    ownerPubKey: string
+    ownerPubKey: string,
+    purse: string
 };
 
 export type PaymentItem = {
@@ -56,13 +57,15 @@ function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
 }
 
 
-const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
+//const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 
 export async function pay(params: PayParams): Promise<PayResult> {
     console.log('params.datas: ',params.datas);
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
+
+    const privateKey = bsv.PrivateKey.fromWIF(params.purse || '');
     if (!process.env.PRIVATE_KEY) {
     throw new Error("Private key is required in .env")
     }

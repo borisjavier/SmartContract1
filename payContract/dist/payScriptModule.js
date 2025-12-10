@@ -49,12 +49,13 @@ function filledTxids(dataPayments, tx0) {
 function getConfirmedUtxos(utxos) {
     return utxos;
 }
-const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
+//const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 async function pay(params) {
     console.log('params.datas: ', params.datas);
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
+    const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(params.purse || '');
     if (!process.env.PRIVATE_KEY) {
         throw new Error("Private key is required in .env");
     }

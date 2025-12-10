@@ -18,11 +18,12 @@ export type DeployParams = {
     ownerPub: string;
     ownerGN: string;
     quarks: number;
+    purse: string;
 };
 
 
 
-const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
+
 
 export type PaymentStateItem = {
     timestamp: string;  // BigInt serializado como string
@@ -51,6 +52,8 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
+
+    const privateKey = bsv.PrivateKey.fromWIF(params.purse || '');
     if (!privateKey) {
         throw new Error("Private key is required");
     } 

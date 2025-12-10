@@ -6,6 +6,7 @@ export type PayParams = {
     txidPago: string;
     qtyTokens: number;
     ownerPubKey: string;
+    purse: string;
 };
 export type PaymentItem = {
     timestamp: string;

@@ -6,7 +6,7 @@ const util = require('util');
 const execPromise = util.promisify(exec);
 const contractDir = path.resolve(__dirname, './payContract');
 
-async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, payScriptFunction) {
+async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFunction) {
     try {
 
         //const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
@@ -21,7 +21,8 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             txids: txids,
             txidPago,
             qtyTokens: bigNumberQtyTokens,
-            ownerPubKey
+            ownerPubKey,
+            purse: purse
         };
 
         /*Es bárbaro
@@ -54,7 +55,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
 let payScriptFromModule = null;
 
 
-      async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
+      async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse) {
         try {
             const { tsSize, jsonSize, source } = await getDataPaymentsSize();
             console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
@@ -101,7 +102,7 @@ let payScriptFromModule = null;
     
             // Llamar a `createAndPay` para ejecutar el script de pago
             console.log('Llamando payScriptModule...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
-            const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, payScriptFromModule);
+            const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFromModule);
             console.log('Pago registrado exitosamente.');
             return result;
     
@@ -135,10 +136,10 @@ let payScriptFromModule = null;
                 }
             }
     
-    async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey) {
+    async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse) {
         try {
             // Llamar a `createPayScriptAndCall` y esperar el resultado
-            const result = await createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey);
+            const result = await createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse);
     
             // Verificar que el resultado sea válido
             if (result && typeof result === 'object' && result.lastStateTxid) {

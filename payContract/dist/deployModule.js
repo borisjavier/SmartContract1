@@ -33,7 +33,6 @@ const dotenv = __importStar(require("dotenv"));
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
-const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 function getConfirmedUtxos(utxos) {
     return utxos;
 }
@@ -42,6 +41,7 @@ async function deployContract(params) {
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
+    const privateKey = scrypt_ts_1.bsv.PrivateKey.fromWIF(params.purse || '');
     if (!privateKey) {
         throw new Error("Private key is required");
     }
@@ -118,25 +118,6 @@ async function deployContract(params) {
     };
 }
 exports.deployContract = deployContract;
-/*async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
-              if(n == N) {
-                const fechas = fill(0n, n) as unknown as FixedArray<Timestamp, typeof N>;
-                console.log('fechas antes de: ', fechas)
-
-                for (let i = 0; i < n; i++) {
-                    const fecha = BigInt(fechaInicio + i * l);
-                    console.log('fecha: ', fecha)
-                    fechas[i] = BigInt(fecha);
-                }
-
-                console.log('fechas después de: ', fechas);
-
-                return fechas;
-              } else {
-                throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`)
-              }
-                
-            }*/
 async function genDatas(n, l, fechaInicio) {
     // Verificar compatibilidad de tamaños
     if (n !== paycontract_1.N) {
