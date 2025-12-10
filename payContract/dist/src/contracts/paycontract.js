@@ -59,14 +59,16 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
     }
     filledTxids(dataPayments) {
         let allFilled = true;
-        let done = true;
-        if (exports.N < 1) {
-            allFilled = false;
+        if (exports.N < 2) {
+            allFilled = (dataPayments[0].txid !== this.EMPTY);
         }
-        for (let i = 0; i < exports.N - 1; i++) {
-            if (done === true && dataPayments[i].txid === this.EMPTY) {
-                allFilled = false;
-                done = false;
+        else {
+            let done = true;
+            for (let i = 0; i < exports.N - 1; i++) {
+                if (done === true && dataPayments[i].txid === this.EMPTY) {
+                    allFilled = false;
+                    done = false;
+                }
             }
         }
         (0, scrypt_ts_1.assert)(allFilled, 'Some txids are still empty');

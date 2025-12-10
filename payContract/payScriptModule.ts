@@ -38,14 +38,15 @@ export type PayResult = {
 // Función auxiliar para verificar si los txids están llenos
 function filledTxids(dataPayments: Payment[], tx0: ByteString): boolean {
     const n = dataPayments.length;
+    const emptyTxidStr = tx0.toString();
 
-    if (n < 2) {
-        return false;
-    }
-
-    for (let i = 0; i < n - 1; i++) {
-        if (dataPayments[i].txid === tx0) {
-            return false;
+    if (n === 1) {
+        return dataPayments[0].txid !== emptyTxidStr;
+    } else {    
+        for (let i = 0; i < n - 1; i++) {
+            if (dataPayments[i].txid === emptyTxidStr) {
+                return false;
+            }
         }
     }
 

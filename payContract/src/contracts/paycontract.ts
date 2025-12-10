@@ -130,16 +130,17 @@ export class PaymentContract extends SmartContract {
 @method()
 filledTxids(dataPayments: Payments): boolean {
     let allFilled = true;
-    let done = true;
 
-    if (N < 1) {
-        allFilled = false;
-    }
+    if (N < 2) {
+        allFilled = (dataPayments[0].txid !== this.EMPTY); 
+    } else {
+        let done = true;
 
-    for (let i = 0; i < N - 1; i++) {
-        if (done === true && dataPayments[i].txid === this.EMPTY) {
-            allFilled = false;
-            done = false;
+        for (let i = 0; i < N - 1; i++) { 
+            if (done === true && dataPayments[i].txid === this.EMPTY) {
+                allFilled = false;
+                done = false;
+            }
         }
     }
 

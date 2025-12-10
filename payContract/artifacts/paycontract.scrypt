@@ -62,14 +62,15 @@ contract PaymentContract {
   }
   function filledTxids(Payment[24] dataPayments) : bool {
     bool allFilled = true;
-    bool done = true;
-    if(24 < 1) {
-        allFilled = false;
-      }
-    loop (23) : i {
-        if(done == true && dataPayments[i].txid == this.EMPTY) {
-          allFilled = false;
-          done = false;
+    if(24 < 2) {
+        allFilled = (dataPayments[0].txid != this.EMPTY);
+      } else {
+        bool done = true;
+        loop (23) : i {
+          if(done == true && dataPayments[i].txid == this.EMPTY) {
+            allFilled = false;
+            done = false;
+          }
         }
       }
     require(allFilled);
