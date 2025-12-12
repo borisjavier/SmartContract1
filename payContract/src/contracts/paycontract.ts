@@ -22,7 +22,7 @@ export type Payment = {
   txid: TxId
 }
 
-export const N = 24;
+export const N = 1;
 
 export type Payments = FixedArray<Payment, typeof N>
 
@@ -136,11 +136,13 @@ filledTxids(dataPayments: Payments): boolean {
     } else {
         let done = true;
 
-        for (let i = 0; i < N - 1; i++) { 
-            if (done === true && dataPayments[i].txid === this.EMPTY) {
-                allFilled = false;
-                done = false;
-            }
+        for (let i = 0; i < N; i++) { 
+            if (i < N - 1) { 
+                if (done === true && dataPayments[i].txid === this.EMPTY) {
+                    allFilled = false;
+                    done = false;
+                }
+            } 
         }
     }
 

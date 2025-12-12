@@ -11,21 +11,21 @@ contract PaymentContract {
   @state Ripemd160 addressGN;
   @state int amountGN;
   @state int qtyTokens;
-  @state Payment[24] dataPayments;
+  @state Payment[1] dataPayments;
   @state bool isValid;
   @state bool isOwner;
   const bytes EMPTY;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[24] datas, bytes[24] txids) {
+  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[1] datas, bytes[1] txids) {
     this.owner = owner;
     this.adminPubKey = adminPubKey;
     this.addressGN = addressGN;
     this.amountGN = amountGN;
     this.qtyTokens = qtyTokens;
-    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 24);
-    loop (24) : i {
+    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 1);
+    loop (1) : i {
         this.dataPayments[i] = {datas[i], txids[i]};
       }
     this.isValid = true;
@@ -49,9 +49,9 @@ contract PaymentContract {
   }
   function updateArr(int currentDate, bytes txid) : bool {
     bool done = true;
-    loop (24) : i {
+    loop (1) : i {
         if(done == true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
-          if(i == 24 - 1 && this.filledTxids(this.dataPayments)) {
+          if(i == 1 - 1 && this.filledTxids(this.dataPayments)) {
             this.isValid = false;
           }
           this.dataPayments[i] = {currentDate, txid};
@@ -60,16 +60,18 @@ contract PaymentContract {
       }
     return true;
   }
-  function filledTxids(Payment[24] dataPayments) : bool {
+  function filledTxids(Payment[1] dataPayments) : bool {
     bool allFilled = true;
-    if(24 < 2) {
+    if(1 < 2) {
         allFilled = (dataPayments[0].txid != this.EMPTY);
       } else {
         bool done = true;
-        loop (23) : i {
-          if(done == true && dataPayments[i].txid == this.EMPTY) {
-            allFilled = false;
-            done = false;
+        loop (1) : i {
+          if(i < 1 - 1) {
+            if(done == true && dataPayments[i].txid == this.EMPTY) {
+              allFilled = false;
+              done = false;
+            }
           }
         }
       }

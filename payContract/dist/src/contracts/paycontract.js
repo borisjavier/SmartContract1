@@ -8,7 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentContract = exports.N = void 0;
 const scrypt_ts_1 = require("scrypt-ts");
-exports.N = 24;
+exports.N = 1;
 class PaymentContract extends scrypt_ts_1.SmartContract {
     constructor(owner, adminPubKey, addressGN, amountGN, qtyTokens, datas, txids) {
         super(...arguments);
@@ -64,10 +64,12 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
         }
         else {
             let done = true;
-            for (let i = 0; i < exports.N - 1; i++) {
-                if (done === true && dataPayments[i].txid === this.EMPTY) {
-                    allFilled = false;
-                    done = false;
+            for (let i = 0; i < exports.N; i++) {
+                if (i < exports.N - 1) {
+                    if (done === true && dataPayments[i].txid === this.EMPTY) {
+                        allFilled = false;
+                        done = false;
+                    }
                 }
             }
         }
