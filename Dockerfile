@@ -23,10 +23,15 @@ RUN npm install && \
 # 3. Copia el resto del código (excluyendo lo innecesario)
 COPY . .
 
-# 4. Salud de la aplicación (opcional pero recomendado)
+# 4. ASEGURAR GN-PROVIDER: Ejecutamos el script de instalación manualmente
+# Esto garantiza que los archivos de la versión actual se copien dentro de scrypt-ts
+RUN cd payContract && node node_modules/gn-provider/install.js && \
+    cd ../escrowContract && node node_modules/gn-provider/install.js
+
+# 5. Salud de la aplicación (opcional pero recomendado)
 HEALTHCHECK --interval=5s --timeout=3s \
   CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
 
-# 5. Exponer puerto y ejecutar
+# 6. Exponer puerto y ejecutar
 EXPOSE 8080
 CMD ["node", "index.js"]
