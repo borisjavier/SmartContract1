@@ -22,7 +22,7 @@ export type Payment = {
   txid: TxId
 }
 
-export const N = 1;
+export const N = 8;
 
 export type Payments = FixedArray<Payment, typeof N>
 

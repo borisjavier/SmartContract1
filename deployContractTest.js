@@ -11,6 +11,7 @@ async function createDeploy() {
     ownerPub: '0285f609126a21237c95f5b211d477b4f6e4bcb0e40103d2107c7b7315dc5bc634',
     ownerGN: '036d37bf32c8c444614ce9c354d0a4b2886a6506317ee9d7f50383f9520f610d2b',
     quarks: 5000,        // Monto en quarks (0.00005 BSV)
+    purse: 'KxzLan4yAWPwUUj1TzhT7BPwq1V7TSMqrovMfJNVarv7BJjCeaCt'
     };
 
     const result = await deployContract(deployParams);
