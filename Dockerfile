@@ -25,8 +25,8 @@ COPY . .
 
 # 4. ASEGURAR GN-PROVIDER: Ejecutamos el script de instalación manualmente
 # Esto garantiza que los archivos de la versión actual se copien dentro de scrypt-ts
-RUN cd payContract && node node_modules/gn-provider/install.js && \
-    cd ../escrowContract && node node_modules/gn-provider/install.js
+RUN cd payContract && node node_modules/gn-provider/scripts/install.js && \
+    cd ../escrowContract && node node_modules/gn-provider/scripts/install.js
 
 # 5. Salud de la aplicación (opcional pero recomendado)
 HEALTHCHECK --interval=5s --timeout=3s \
