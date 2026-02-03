@@ -26,7 +26,10 @@ if (!woc_api_key) {
 }
 
 const network = bsv.Networks.mainnet // o bsv.Networks.testnet
-const provider = new GNProvider(network, woc_api_key)
+//const provider = new GNProvider(network, woc_api_key)
+const provider = new GNProvider(network, woc_api_key, '', {
+    bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app',
+})
 // Tipos para parámetros
 export type EscrowDeployParams = {
     publicKeys: string[]

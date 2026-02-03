@@ -18,7 +18,10 @@ dotenv.config({ path: envPath })
 const woc_api_key = process.env.WOC_API_KEY
 
 const network = bsv.Networks.mainnet
-const provider = new GNProvider(network, woc_api_key)
+//const provider = new GNProvider(network, woc_api_key)
+const provider = new GNProvider(network, woc_api_key, '', {
+    bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app',
+})
 
 if (!woc_api_key) {
     throw new Error('No "WOC_API_KEY" found in .env file')

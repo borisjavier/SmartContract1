@@ -1,9 +1,6 @@
 const { checkCache, clearContractCache, dynamicImport, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
 const path = require('path');
-const fs = require('fs');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
+
 const contractDir = path.resolve(__dirname, './payContract');
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFunction) {
@@ -111,30 +108,7 @@ let payScriptFromModule = null;
         }
     }
 
-    async function compileContract() {
-                try {
-                    const { stdout, stderr } = await execPromise('npx tsc', {
-                        cwd: path.resolve(__dirname, 'payContract') // Directorio del contrato
-                    });
-                    
-                    console.log('✅ Compilación exitosa');
-                    console.log(stdout);
-                    
-                    if (stderr) {
-                        console.warn('⚠️ Advertencias de compilación:', stderr);
-                    }
-                    
-                    // Verificar que los archivos JS se generaron
-                    const jsFiles = fs.readdirSync(path.resolve(__dirname, 'payContract/dist'));
-                    if (!jsFiles.length) {
-                        throw new Error('No se generaron archivos JS en la compilación');
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Error en la compilación:', error);
-                    throw new Error(`Falló la compilación: ${error.stderr || error.message}`);
-                }
-            }
+
     
     async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse) {
         try {

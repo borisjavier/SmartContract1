@@ -66,7 +66,10 @@ async function pay(params) {
         throw new Error("Owner public key is required");
     }
     const woc_api_key = process.env.WOC_API_KEY;
-    const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key);
+    //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
+    const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key, '', {
+        bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app'
+    });
     const address = privateKey.toAddress();
     const allUtxos = await provider.listUnspent(address);
     const confirmedUtxos = getConfirmedUtxos(allUtxos);

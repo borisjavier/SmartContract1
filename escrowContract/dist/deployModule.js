@@ -40,7 +40,10 @@ if (!woc_api_key) {
     throw new Error('No "WOC_API_KEY" found in .env file');
 }
 const network = scrypt_ts_1.bsv.Networks.mainnet; // o bsv.Networks.testnet
-const provider = new gn_provider_1.GNProvider(network, woc_api_key);
+//const provider = new GNProvider(network, woc_api_key)
+const provider = new gn_provider_1.GNProvider(network, woc_api_key, '', {
+    bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app',
+});
 const amount = 100;
 function validatePublicKeys(publicKeys) {
     if (!Array.isArray(publicKeys) || publicKeys.length !== escrowcontract_1.SIGS) {
