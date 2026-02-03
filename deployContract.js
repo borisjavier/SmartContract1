@@ -77,9 +77,12 @@ let deployContractFromModule = null;
                     await clearContractCache();
                     console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);
 
-                    
+                    const finalPath = path.resolve(contractDir, 'dist', 'deployModule.js');
+                        console.log(`🔍 Intentando cargar desde: ${finalPath}`);
+                        //const deployModule = await dynamicImport(finalPath);
+
                     const deployModule = await dynamicImport(
-                        path.resolve(contractDir, 'dist', 'deployModule.js')
+                        path.resolve(finalPath)
                     );
 
                     deployContractFromModule = deployModule.deployContract;
@@ -88,7 +91,7 @@ let deployContractFromModule = null;
         
                 if (!deployContractFromModule) {
                 const deployModule = await dynamicImport(
-                    path.resolve(__dirname, 'deployModule.js')
+                    path.resolve(contractDir, 'dist', 'deployModule.js')
                 );
                 deployContractFromModule = deployModule.deployContract;
                 }
