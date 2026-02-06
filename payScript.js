@@ -9,7 +9,9 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
         //const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
         const bigIntArrayDatas = datas.map(num => BigInt(num).toString());
         //const formattedTxids = JSON.stringify(txids)
-        const bigNumberQtyTokens = `${qtyT}`;
+        //const bigNumberQtyTokens = `${qtyT}`;
+        const safeQtyTokens = qtyT !== undefined ? qtyT : 0;
+        if(qtyT === 0) {console.warn('qty es indefinido en este punto.')}
 
         const paymentData = {
             txId: lastStateTxid,
@@ -17,7 +19,7 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
             datas: bigIntArrayDatas,//.map(b => b.toString())
             txids: txids,
             txidPago,
-            qtyTokens: bigNumberQtyTokens,
+            qtyTokens: safeQtyTokens,
             ownerPubKey,
             purse: purse
         };
