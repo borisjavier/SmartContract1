@@ -30,6 +30,7 @@ const fs = __importStar(require("fs"));
 const scrypt_ts_1 = require("scrypt-ts");
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const dotenv = __importStar(require("dotenv"));
+const retries_1 = require("./retries");
 // Cargar el archivo .env
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
@@ -71,7 +72,7 @@ async function pay(params) {
         bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app'
     });
     const address = privateKey.toAddress();
-    const allUtxos = await provider.listUnspent(address);
+    const allUtxos = await (0, retries_1.withRetries)(() => provider.listUnspent(address)); //await provider.listUnspent(address);
     const confirmedUtxos = getConfirmedUtxos(allUtxos);
     if (confirmedUtxos.length === 0) {
         throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
@@ -132,12 +133,29 @@ async function pay(params) {
     const publicKey = privateKey.publicKey;
     // Llamar al método del contrato
     try {
-        const { tx: unlockTx } = await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSig)(sigResps, publicKey), pubKey, currentDate, txIdPago, {
-            next: {
-                instance: nextInstance,
-                balance: instance.balance,
-            },
-            pubKeyOrAddrToSign: publicKey,
+        /*const { tx: unlockTx } = await instance.methods.pay(
+            (sigResps) => findSig(sigResps, publicKey),
+            pubKey,
+            currentDate,
+            txIdPago,
+            {
+                next: {
+                    instance: nextInstance,
+                    balance: instance.balance,
+                },
+                pubKeyOrAddrToSign: publicKey,
+            } as MethodCallOptions<PaymentContract>
+        );*/
+        const { tx: unlockTx } = await (0, retries_1.withRetries)(async () => {
+            // Aseguramos conexión antes de cada intento de llamada
+            await instance.connect(signer);
+            return await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSig)(sigResps, publicKey), pubKey, currentDate, txIdPago, {
+                next: {
+                    instance: nextInstance,
+                    balance: instance.balance,
+                },
+                pubKeyOrAddrToSign: publicKey,
+            });
         });
         // Preparar resultado
         const result = {

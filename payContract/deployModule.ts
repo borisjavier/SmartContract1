@@ -5,6 +5,7 @@ import { bsv, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fi
 import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { withRetries } from './retries';
 
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
@@ -57,6 +58,14 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     if (!privateKey) {
         throw new Error("Private key is required");
     } 
+
+    const woc_api_key = process.env.WOC_API_KEY;
+    // Configurar provider y signer
+    //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
+    const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
+        bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
+    });
+    
     if (!adminPublicKey) {
         throw new Error("Admin public key is required");
     } 
@@ -83,16 +92,11 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     validatePubKey(adminPublicKey, 'adminPublicKey');
     validatePubKey(params.ownerPub, 'ownerPub');
     validatePubKey(params.ownerGN, 'ownerGN');
-    const woc_api_key = process.env.WOC_API_KEY;
-    // Configurar provider y signer
-    //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
-    const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
-        bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
-    });
+    
 
     const address = privateKey.toAddress(); 
 
-    const allUtxos = await provider.listUnspent(address);
+    const allUtxos = await withRetries(() => provider.listUnspent(address));//await provider.listUnspent(address);
     const confirmedUtxos = getConfirmedUtxos(allUtxos);
 
     if (confirmedUtxos.length === 0) {
@@ -142,9 +146,14 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
   await contract.connect(signer);
 
   // 4. Despliega y retorna resultado directo
-  const deployTx = await contract.deploy(1, {
-        utxos: confirmedUtxos  
+  const deployTx = await withRetries(async () => {
+        await contract.connect(signer);
+        return await contract.deploy(1, { utxos: confirmedUtxos });
     });
+  
+  /*await contract.deploy(1, {
+        utxos: confirmedUtxos  
+    });*/
   
   // Preparar resultado
   const serializedState: PaymentState = contract.dataPayments.map(payment => ({

@@ -29,6 +29,7 @@ const fs = __importStar(require("fs"));
 const escrowcontract_1 = require("./src/contracts/escrowcontract");
 const scrypt_ts_1 = require("scrypt-ts");
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
+const retries_1 = require("./retries");
 const dotenv = __importStar(require("dotenv"));
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
@@ -79,15 +80,29 @@ async function payEscrowContract(params) {
                 const publicKeys = allPrivateKeys.map((pk) => pk.publicKey);
                 // Obtener UTXOs para el signer
                 const address = privateKey.toAddress();
-                const allUtxos = await provider.listUnspent(address);
+                //const allUtxos = await provider.listUnspent(address);
+                const allUtxos = await (0, retries_1.withRetries)(() => provider.listUnspent(address));
                 const confirmedUtxos = getConfirmedUtxos(allUtxos);
                 if (confirmedUtxos.length === 0) {
                     throw new Error('No confirmed UTXOs available for transaction');
                 }
                 const signer = new scrypt_ts_1.TestWallet(allPrivateKeys, provider);
                 await instance.connect(signer);
-                const { tx: unlockTx } = await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSigs)(sigResps, publicKeys), publicKeys.map((publicKey) => (0, scrypt_ts_1.PubKey)(publicKey.toByteString())), {
-                    pubKeyOrAddrToSign: publicKeys,
+                /*const { tx: unlockTx } = await instance.methods.pay(
+                    (sigResps) => findSigs(sigResps, publicKeys),
+                    publicKeys.map((publicKey) =>
+                        PubKey(publicKey.toByteString())
+                    ),
+                    {
+                        pubKeyOrAddrToSign: publicKeys,
+                    } as MethodCallOptions<Escrowcontract>
+                )*/
+                const { tx: unlockTx } = await (0, retries_1.withRetries)(async () => {
+                    await instance.connect(signer);
+                    return await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSigs)(sigResps, publicKeys), publicKeys.map((pk) => (0, scrypt_ts_1.PubKey)(pk.toByteString())), {
+                        pubKeyOrAddrToSign: publicKeys,
+                        utxos: confirmedUtxos // Opcional: pasar UTXOs directamente
+                    });
                 });
                 console.log('✅ Escrow contract pay method called successfully: ', unlockTx.id);
                 return {

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, ByteString, UTXO } from 'scrypt-ts';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import * as dotenv from 'dotenv';
+import { withRetries } from './retries';
 
 // Cargar el archivo .env
 const envPath = path.resolve(__dirname, '../.env');
@@ -82,7 +83,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
     });
 
     const address = privateKey.toAddress();
-    const allUtxos = await provider.listUnspent(address);
+    const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address);
     const confirmedUtxos = getConfirmedUtxos(allUtxos);
 
     if (confirmedUtxos.length === 0) {
@@ -162,7 +163,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
 
     // Llamar al método del contrato
     try {
-        const { tx: unlockTx } = await instance.methods.pay(
+        /*const { tx: unlockTx } = await instance.methods.pay(
             (sigResps) => findSig(sigResps, publicKey),
             pubKey,
             currentDate,
@@ -174,7 +175,25 @@ export async function pay(params: PayParams): Promise<PayResult> {
                 },
                 pubKeyOrAddrToSign: publicKey,
             } as MethodCallOptions<PaymentContract>
-        );
+        );*/
+        const { tx: unlockTx } = await withRetries(async () => {
+            // Aseguramos conexión antes de cada intento de llamada
+            await instance.connect(signer);
+            return await instance.methods.pay(
+                (sigResps) => findSig(sigResps, publicKey),
+                pubKey,
+                currentDate,
+                txIdPago,
+                {
+                    next: {
+                        instance: nextInstance,
+                        balance: instance.balance,
+                    },
+                    pubKeyOrAddrToSign: publicKey,
+                } as MethodCallOptions<PaymentContract>
+            );
+        });
+    
 
         // Preparar resultado
         const result: PayResult = {

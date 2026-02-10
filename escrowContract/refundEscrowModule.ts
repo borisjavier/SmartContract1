@@ -11,7 +11,8 @@ import {
 } from 'scrypt-ts'
 //import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
-import * as dotenv from 'dotenv'
+import * as dotenv from 'dotenv';
+import { withRetries } from './retries';
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -99,7 +100,7 @@ export async function refundEscrowContract(
 
                 // Obtener UTXOs para el signer
                 const address = privateKey.toAddress()
-                const allUtxos = await provider.listUnspent(address)
+                const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address)
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -110,11 +111,26 @@ export async function refundEscrowContract(
 
                 const signer = new TestWallet(allPrivateKeys, provider)
                 await instance.connect(signer)
+                //const lockTime = Math.floor(Date.now() / 1000)
 
-                // Obtener el tiempo actual para el lockTime (en segundos)
-                const lockTime = Math.floor(Date.now() / 1000)
+                const { tx: unlockTx } = await withRetries(async () => {
+                    // Conectamos el signer antes de intentar la llamada
+                    await instance.connect(signer)
+                    
+                    // Tiempo actual para nLockTime
+                    const lockTime = Math.floor(Date.now() / 1000)
 
-                const { tx: unlockTx } = await instance.methods.refundDeadline(
+                    return await instance.methods.refundDeadline(
+                        (sigResps) => findSigs(sigResps, publicKeys),
+                        publicKeys.map((pk) => PubKey(pk.toByteString())),
+                        {
+                            pubKeyOrAddrToSign: publicKeys,
+                            lockTime: lockTime,
+                            utxos: confirmedUtxos
+                        } as MethodCallOptions<Escrowcontract>
+                    )
+                })
+                /*const { tx: unlockTx } = await instance.methods.refundDeadline(
                     (sigResps) => findSigs(sigResps, publicKeys),
                     publicKeys.map((publicKey) =>
                         PubKey(publicKey.toByteString())
@@ -123,7 +139,7 @@ export async function refundEscrowContract(
                         pubKeyOrAddrToSign: publicKeys,
                         lockTime: lockTime,
                     } as MethodCallOptions<Escrowcontract>
-                )
+                )*/
 
                 console.log(
                     '✅ Escrow contract refundDeadline method called successfully: ',

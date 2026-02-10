@@ -10,8 +10,9 @@ import {
     hash160,
     UTXO,
 } from 'scrypt-ts'
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
-import * as dotenv from 'dotenv'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { withRetries } from './retries';
+import * as dotenv from 'dotenv';
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -112,7 +113,7 @@ export async function deployEscrowContract(
         for (let i = 0; i < attempts; i++) {
             try {
                 const address = privateKey.toAddress()
-                const allUtxos = await provider.listUnspent(address)
+                const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address)
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -128,9 +129,15 @@ export async function deployEscrowContract(
                 )
                 await contract.connect(signer)
 
-                const deployTx = await contract.deploy(amount, {
-                    utxos: confirmedUtxos,
+                const deployTx = await withRetries(async () => {
+                    await contract.connect(signer)
+                    return await contract.deploy(amount, {
+                        utxos: confirmedUtxos,
+                    })
                 })
+                /*await contract.deploy(amount, {
+                    utxos: confirmedUtxos,
+                })*/
 
                 return {
                     txId: deployTx.id,

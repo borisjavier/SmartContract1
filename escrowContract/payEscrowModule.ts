@@ -9,8 +9,9 @@ import {
     TestWallet,
     UTXO,
 } from 'scrypt-ts'
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
-import * as dotenv from 'dotenv'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { withRetries } from './retries';
+import * as dotenv from 'dotenv';
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -102,7 +103,8 @@ export async function payEscrowContract(
 
                 // Obtener UTXOs para el signer
                 const address = privateKey.toAddress()
-                const allUtxos = await provider.listUnspent(address)
+                //const allUtxos = await provider.listUnspent(address);
+                const allUtxos = await withRetries(() => provider.listUnspent(address))
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -114,7 +116,7 @@ export async function payEscrowContract(
                 const signer = new TestWallet(allPrivateKeys, provider)
                 await instance.connect(signer)
 
-                const { tx: unlockTx } = await instance.methods.pay(
+                /*const { tx: unlockTx } = await instance.methods.pay(
                     (sigResps) => findSigs(sigResps, publicKeys),
                     publicKeys.map((publicKey) =>
                         PubKey(publicKey.toByteString())
@@ -122,7 +124,18 @@ export async function payEscrowContract(
                     {
                         pubKeyOrAddrToSign: publicKeys,
                     } as MethodCallOptions<Escrowcontract>
-                )
+                )*/
+               const { tx: unlockTx } = await withRetries(async () => {
+                    await instance.connect(signer)
+                    return await instance.methods.pay(
+                        (sigResps) => findSigs(sigResps, publicKeys),
+                        publicKeys.map((pk) => PubKey(pk.toByteString())),
+                        {
+                            pubKeyOrAddrToSign: publicKeys,
+                            utxos: confirmedUtxos // Opcional: pasar UTXOs directamente
+                        } as MethodCallOptions<Escrowcontract>
+                    )
+                })
 
                 console.log(
                     '✅ Escrow contract pay method called successfully: ',
