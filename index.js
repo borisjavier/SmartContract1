@@ -41,7 +41,7 @@ app.post('/gen-contract', async (req, res) => {
 });
 
 
-// Endpoint para desplegar un contrato
+// Endpoint para desplegar un contrato maravilla
 app.post('/pay', async (req, res) => {
   const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse } = req.body;
 
