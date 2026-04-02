@@ -2,7 +2,7 @@
 import { PaymentContract, Payment, N } from './src/contracts/paycontract';//Timestamp,
 import * as path from 'path';
 import * as fs from 'fs';
-import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, ByteString, UTXO } from 'scrypt-ts';
+import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, UTXO } from 'scrypt-ts';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import * as dotenv from 'dotenv';
 import { withRetries } from './retries';
@@ -36,23 +36,6 @@ export type PayResult = {
     isValid: boolean;
 };
 
-// Función auxiliar para verificar si los txids están llenos
-function filledTxids(dataPayments: Payment[], tx0: ByteString): boolean {
-    const n = dataPayments.length;
-    const emptyTxidStr = tx0.toString();
-
-    if (n === 1) {
-        return dataPayments[0].txid !== emptyTxidStr;
-    } else {    
-        for (let i = 0; i < n - 1; i++) {
-            if (dataPayments[i].txid === emptyTxidStr) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
 
 function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
     return utxos
@@ -133,13 +116,19 @@ export async function pay(params: PayParams): Promise<PayResult> {
 
     for (let i = 0; i < N; i++) {
         if (!updated && dataPayments[i].timestamp < currentDate && dataPayments[i].txid === tx0) {
-            if (i === N - 1 && filledTxids(Array.from(dataPayments), tx0)) {
-                isValid = false;
-            }
+
+            // 1. Llenamos el slot primero
             dataPayments[i] = {
                 timestamp: currentDate,
                 txid: txIdPago,
             };
+
+            // 2. Si este slot que acabamos de llenar era el último disponible, invalidamos el contrato
+            if (i === N - 1) {
+                isValid = false;
+            }
+            
+            // 3. Marcamos como actualizado para detener el bucle
             updated = true;
         }
     }
