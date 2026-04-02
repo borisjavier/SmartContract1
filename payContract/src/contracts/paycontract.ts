@@ -22,7 +22,7 @@ export type Payment = {
   txid: TxId
 }
 
-export const N = 8;
+export const N = 1;
 
 export type Payments = FixedArray<Payment, typeof N>
 
@@ -108,7 +108,7 @@ export class PaymentContract extends SmartContract {
       assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
   }
 
-      @method()
+      /*@method()
       updateArr(currentDate: Timestamp, txid: TxId): void {
           let done = true;
 
@@ -124,10 +124,30 @@ export class PaymentContract extends SmartContract {
                   done = false;
               }
           }
-      }
-      
+      }*/
 
 @method()
+updateArr(currentDate: Timestamp, txid: TxId): void {
+    let done = true;
+
+    for (let i = 0; i < N; i++) {
+        if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
+            // Registrar el pago
+            this.dataPayments[i] = {
+                timestamp: currentDate,
+                txid: txid
+            };
+            // Si es el último slot, el contrato queda inválido (terminado)
+            if (i === N - 1) {
+                this.isValid = false;
+            }
+            done = false;
+        }
+    }
+}
+      
+
+/*@method()
 filledTxids(dataPayments: Payments): boolean {
     let allFilled = true;
 
@@ -149,7 +169,7 @@ filledTxids(dataPayments: Payments): boolean {
     assert(allFilled, 'Some txids are still empty');
 
     return allFilled;  
-}
+}*/
 
   
   @method() 

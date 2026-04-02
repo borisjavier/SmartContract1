@@ -8,7 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentContract = exports.N = void 0;
 const scrypt_ts_1 = require("scrypt-ts");
-exports.N = 8;
+exports.N = 1;
 class PaymentContract extends scrypt_ts_1.SmartContract {
     constructor(owner, adminPubKey, addressGN, amountGN, qtyTokens, datas, txids) {
         super(...arguments);
@@ -42,11 +42,13 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
         this.debug.diffOutputs(outputs);
         (0, scrypt_ts_1.assert)(this.ctx.hashOutputs === (0, scrypt_ts_1.hash256)(outputs), 'hashOutputs mismatch');
     }
-    updateArr(currentDate, txid) {
+    /*@method()
+    updateArr(currentDate: Timestamp, txid: TxId): void {
         let done = true;
-        for (let i = 0; i < exports.N; i++) {
+
+        for (let i = 0; i < N; i++) {
             if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-                if (i === exports.N - 1 && this.filledTxids(this.dataPayments)) {
+                if (i === N - 1 && this.filledTxids(this.dataPayments)) {
                     this.isValid = false;
                 }
                 this.dataPayments[i] = {
@@ -56,16 +58,35 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
                 done = false;
             }
         }
-    }
-    filledTxids(dataPayments) {
-        let allFilled = true;
-        if (exports.N < 2) {
-            allFilled = (dataPayments[0].txid !== this.EMPTY);
+    }*/
+    updateArr(currentDate, txid) {
+        let done = true;
+        for (let i = 0; i < exports.N; i++) {
+            if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
+                // Registrar el pago
+                this.dataPayments[i] = {
+                    timestamp: currentDate,
+                    txid: txid
+                };
+                // Si es el último slot, el contrato queda inválido (terminado)
+                if (i === exports.N - 1) {
+                    this.isValid = false;
+                }
+                done = false;
+            }
         }
-        else {
+    }
+    /*@method()
+    filledTxids(dataPayments: Payments): boolean {
+        let allFilled = true;
+    
+        if (N < 2) {
+            allFilled = (dataPayments[0].txid !== this.EMPTY);
+        } else {
             let done = true;
-            for (let i = 0; i < exports.N; i++) {
-                if (i < exports.N - 1) {
+    
+            for (let i = 0; i < N; i++) {
+                if (i < N - 1) {
                     if (done === true && dataPayments[i].txid === this.EMPTY) {
                         allFilled = false;
                         done = false;
@@ -73,9 +94,11 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
                 }
             }
         }
-        (0, scrypt_ts_1.assert)(allFilled, 'Some txids are still empty');
+    
+        assert(allFilled, 'Some txids are still empty');
+    
         return allFilled;
-    }
+    }*/
     transferOwnership(signature, publicKey, oldOwner, newOwner, newAddressGN) {
         // admin verification
         (0, scrypt_ts_1.assert)(this.checkSig(signature, publicKey), 'Signature verification failed');
@@ -150,9 +173,6 @@ __decorate([
 __decorate([
     (0, scrypt_ts_1.method)()
 ], PaymentContract.prototype, "updateArr", null);
-__decorate([
-    (0, scrypt_ts_1.method)()
-], PaymentContract.prototype, "filledTxids", null);
 __decorate([
     (0, scrypt_ts_1.method)()
 ], PaymentContract.prototype, "transferOwnership", null);

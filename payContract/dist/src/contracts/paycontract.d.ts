@@ -5,7 +5,7 @@ export type Payment = {
     timestamp: Timestamp;
     txid: TxId;
 };
-export declare const N = 8;
+export declare const N = 1;
 export type Payments = FixedArray<Payment, typeof N>;
 export declare class PaymentContract extends SmartContract {
     owner: Addr;
@@ -20,7 +20,6 @@ export declare class PaymentContract extends SmartContract {
     constructor(owner: Addr, adminPubKey: PubKey, addressGN: Addr, amountGN: bigint, qtyTokens: bigint, datas: FixedArray<Timestamp, typeof N>, txids: FixedArray<ByteString, typeof N>);
     pay(signature: Sig, publicKey: PubKey, currentDate: bigint, txIdPago: ByteString): void;
     updateArr(currentDate: Timestamp, txid: TxId): void;
-    filledTxids(dataPayments: Payments): boolean;
     transferOwnership(signature: Sig, publicKey: PubKey, oldOwner: Addr, newOwner: Addr, newAddressGN: Addr): void;
     transferPartial(signature: Sig, publicKey: PubKey, oldOwner: Addr, newAmountGN: bigint, newQtyTokens: bigint): void;
     verifyId(owner: Addr): void;
