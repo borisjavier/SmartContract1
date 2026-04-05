@@ -11,21 +11,21 @@ contract PaymentContract {
   @state Ripemd160 addressGN;
   @state int amountGN;
   @state int qtyTokens;
-  @state Payment[1] dataPayments;
+  @state Payment[12] dataPayments;
   @state bool isValid;
   @state bool isOwner;
   const bytes EMPTY;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[1] datas, bytes[1] txids) {
+  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[12] datas, bytes[12] txids) {
     this.owner = owner;
     this.adminPubKey = adminPubKey;
     this.addressGN = addressGN;
     this.amountGN = amountGN;
     this.qtyTokens = qtyTokens;
-    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 1);
-    loop (1) : i {
+    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 12);
+    loop (12) : i {
         this.dataPayments[i] = {datas[i], txids[i]};
       }
     this.isValid = true;
@@ -49,10 +49,10 @@ contract PaymentContract {
   }
   function updateArr(int currentDate, bytes txid) : bool {
     bool done = true;
-    loop (1) : i {
+    loop (12) : i {
         if(done == true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
           this.dataPayments[i] = {currentDate, txid};
-          if(i == 1 - 1) {
+          if(i == 12 - 1) {
             this.isValid = false;
           }
           done = false;

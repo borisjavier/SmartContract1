@@ -34,22 +34,6 @@ const retries_1 = require("./retries");
 // Cargar el archivo .env
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
-// Función auxiliar para verificar si los txids están llenos
-function filledTxids(dataPayments, tx0) {
-    const n = dataPayments.length;
-    const emptyTxidStr = tx0.toString();
-    if (n === 1) {
-        return dataPayments[0].txid !== emptyTxidStr;
-    }
-    else {
-        for (let i = 0; i < n - 1; i++) {
-            if (dataPayments[i].txid === emptyTxidStr) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
 function getConfirmedUtxos(utxos) {
     return utxos;
 }
@@ -107,13 +91,16 @@ async function pay(params) {
     let updated = false;
     for (let i = 0; i < paycontract_1.N; i++) {
         if (!updated && dataPayments[i].timestamp < currentDate && dataPayments[i].txid === tx0) {
-            if (i === paycontract_1.N - 1 && filledTxids(Array.from(dataPayments), tx0)) {
-                isValid = false;
-            }
+            // 1. Llenamos el slot primero
             dataPayments[i] = {
                 timestamp: currentDate,
                 txid: txIdPago,
             };
+            // 2. Si este slot que acabamos de llenar era el último disponible, invalidamos el contrato
+            if (i === paycontract_1.N - 1) {
+                isValid = false;
+            }
+            // 3. Marcamos como actualizado para detener el bucle
             updated = true;
         }
     }
