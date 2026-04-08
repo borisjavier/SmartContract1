@@ -29,6 +29,7 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const scrypt_ts_1 = require("scrypt-ts");
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
+const gn_wallet_1 = require("gn-wallet");
 const dotenv = __importStar(require("dotenv"));
 const retries_1 = require("./retries");
 // Cargar el archivo .env
@@ -61,7 +62,11 @@ async function pay(params) {
     if (confirmedUtxos.length === 0) {
         throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
     }
-    const signer = new scrypt_ts_1.TestWallet(privateKey, provider);
+    const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
+        targetUtxos: 50,
+        dustLimit: 546,
+        cacheTTL: 30000
+    });
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
     if (!fs.existsSync(artifactPath)) {
         throw new Error(`Artefacto no encontrado en: ${artifactPath}`);

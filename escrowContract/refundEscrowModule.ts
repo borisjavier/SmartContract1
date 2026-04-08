@@ -6,11 +6,11 @@ import {
     findSigs,
     MethodCallOptions,
     PubKey,
-    TestWallet,
     UTXO,
 } from 'scrypt-ts'
 //import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet';
 import * as dotenv from 'dotenv';
 import { withRetries } from './retries';
 
@@ -109,7 +109,11 @@ export async function refundEscrowContract(
                     )
                 }
 
-                const signer = new TestWallet(allPrivateKeys, provider)
+                const signer = new GNWallet(privateKey, provider, {
+                    targetUtxos: 50,   
+                    dustLimit: 546,    
+                    cacheTTL: 30000    
+                });
                 await instance.connect(signer)
                 //const lockTime = Math.floor(Date.now() / 1000)
 

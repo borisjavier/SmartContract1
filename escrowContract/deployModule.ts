@@ -4,13 +4,13 @@ import { Escrowcontract, SIGS } from './src/contracts/escrowcontract'
 import {
     bsv,
     FixedArray,
-    TestWallet,
     Addr,
     PubKey,
     hash160,
     UTXO,
 } from 'scrypt-ts'
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet';
 import { withRetries } from './retries';
 import * as dotenv from 'dotenv';
 
@@ -122,7 +122,12 @@ export async function deployEscrowContract(
                     )
                 }
 
-                const signer = new TestWallet(privateKey, provider)
+                const signer = new GNWallet(privateKey, provider, {
+                    targetUtxos: 50,   
+                    dustLimit: 546,    
+                    cacheTTL: 30000    
+                });
+
                 const contract = new Escrowcontract(
                     addresses,
                     params.lockTimeMin

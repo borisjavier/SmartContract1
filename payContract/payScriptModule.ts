@@ -2,8 +2,9 @@
 import { PaymentContract, Payment, N } from './src/contracts/paycontract';//Timestamp,
 import * as path from 'path';
 import * as fs from 'fs';
-import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, TestWallet, UTXO } from 'scrypt-ts';
+import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, UTXO } from 'scrypt-ts';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet';
 import * as dotenv from 'dotenv';
 import { withRetries } from './retries';
 
@@ -74,7 +75,11 @@ export async function pay(params: PayParams): Promise<PayResult> {
         }
 
     
-    const signer = new TestWallet(privateKey, provider);
+    const signer = new GNWallet(privateKey, provider, {
+                targetUtxos: 50,   
+                dustLimit: 546,    
+                cacheTTL: 30000    
+            });
 
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
         

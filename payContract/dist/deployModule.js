@@ -31,6 +31,7 @@ const scrypt_ts_1 = require("scrypt-ts");
 const config_1 = require("./config");
 const dotenv = __importStar(require("dotenv"));
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
+const gn_wallet_1 = require("gn-wallet");
 const retries_1 = require("./retries");
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
@@ -78,7 +79,11 @@ async function deployContract(params) {
     if (confirmedUtxos.length === 0) {
         throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
     }
-    const signer = new scrypt_ts_1.TestWallet(privateKey, provider);
+    const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
+        targetUtxos: 50,
+        dustLimit: 546,
+        cacheTTL: 30000
+    });
     // Generar datas usando la función auxiliar
     const datas = await genDatas(params.n, params.lapse, params.startDate);
     // Configurar valores iniciales

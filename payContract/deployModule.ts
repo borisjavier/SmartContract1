@@ -1,10 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
-import { bsv, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill, UTXO } from 'scrypt-ts';
+import { bsv, PubKey, Addr, ByteString, FixedArray, toByteString, fill, UTXO } from 'scrypt-ts';
 import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet';
 import { withRetries } from './retries';
 
 const envPath = path.resolve(__dirname, '../.env');
@@ -21,9 +22,6 @@ export type DeployParams = {
     quarks: number;
     purse: string;
 };
-
-
-
 
 
 export type PaymentStateItem = {
@@ -103,7 +101,11 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
         throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
     }
 
-    const signer = new TestWallet(privateKey, provider);
+    const signer = new GNWallet(privateKey, provider, {
+                targetUtxos: 50,   
+                dustLimit: 546,    
+                cacheTTL: 30000    
+            });
 
     // Generar datas usando la función auxiliar
     const datas = await genDatas(params.n, params.lapse, params.startDate);

@@ -1,6 +1,8 @@
 
             import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
-            import { bsv, DefaultProvider, TestWallet, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts';
+            import { bsv, PubKey, Addr, ByteString, FixedArray, toByteString, fill } from 'scrypt-ts'; //TestWallet, 
+            import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+            import { GNWallet } from 'gn-wallet';
             import { adminPublicKey } from './config';
             import { promises as fs } from 'fs';
 
@@ -14,14 +16,27 @@
             }
 
             const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '')
-                
+               
+            const woc_api_key = process.env.WOC_API_KEY;
+            // Configurar provider y signer
+            //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
+            const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
+                bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
+            });
 
-            const signer = new TestWallet(
+            /*const signer = new TestWallet(
                 privateKey,
                 new DefaultProvider({
                     network: bsv.Networks.mainnet,
                 })
-            )
+            )*/
+            //const signer = new GNWallet(privateKey, provider);
+
+            const signer = new GNWallet(privateKey, provider, {
+                targetUtxos: 50,   // opcional
+                dustLimit: 546,    // opcional
+                cacheTTL: 30000    // opcional
+            });
 
             async function main(qtyT, l, fIn, ownerPub, ownerGN, quarks) {
 
