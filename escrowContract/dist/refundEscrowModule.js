@@ -30,6 +30,7 @@ const escrowcontract_1 = require("./src/contracts/escrowcontract");
 const scrypt_ts_1 = require("scrypt-ts");
 //import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
+const gn_wallet_1 = require("gn-wallet");
 const dotenv = __importStar(require("dotenv"));
 const retries_1 = require("./retries");
 const envPath = path.resolve(__dirname, '../.env');
@@ -86,7 +87,11 @@ async function refundEscrowContract(params) {
                 if (confirmedUtxos.length === 0) {
                     throw new Error('No confirmed UTXOs available for transaction');
                 }
-                const signer = new scrypt_ts_1.TestWallet(allPrivateKeys, provider);
+                const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000
+                });
                 await instance.connect(signer);
                 //const lockTime = Math.floor(Date.now() / 1000)
                 const { tx: unlockTx } = await (0, retries_1.withRetries)(async () => {

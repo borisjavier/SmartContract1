@@ -29,6 +29,7 @@ const fs = __importStar(require("fs"));
 const escrowcontract_1 = require("./src/contracts/escrowcontract");
 const scrypt_ts_1 = require("scrypt-ts");
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
+const gn_wallet_1 = require("gn-wallet");
 const retries_1 = require("./retries");
 const dotenv = __importStar(require("dotenv"));
 const envPath = path.resolve(__dirname, '../.env');
@@ -91,7 +92,11 @@ async function deployEscrowContract(params) {
                 if (confirmedUtxos.length === 0) {
                     throw new Error('No confirmed UTXOs available for deployment');
                 }
-                const signer = new scrypt_ts_1.TestWallet(privateKey, provider);
+                const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000
+                });
                 const contract = new escrowcontract_1.Escrowcontract(addresses, params.lockTimeMin);
                 await contract.connect(signer);
                 const deployTx = await (0, retries_1.withRetries)(async () => {
