@@ -113,7 +113,7 @@ export async function payEscrowContract(
                     )
                 }
 
-                const signer = new GNWallet(privateKey, provider, {
+                const signer = new GNWallet(allPrivateKeys, provider, {
                     targetUtxos: 50,   
                     dustLimit: 546,    
                     cacheTTL: 30000    
