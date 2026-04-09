@@ -1,18 +1,12 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Escrowcontract } from './src/contracts/escrowcontract'
-import {
-    bsv,
-    findSigs,
-    MethodCallOptions,
-    PubKey,
-    UTXO,
-} from 'scrypt-ts'
+import { bsv, findSigs, MethodCallOptions, PubKey, UTXO } from 'scrypt-ts'
 //import { GNProvider, UTXOWithHeight } from 'scrypt-ts/dist/providers/gn-provider';
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
-import { GNWallet } from 'gn-wallet';
-import * as dotenv from 'dotenv';
-import { withRetries } from './retries';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+import { GNWallet } from 'gn-wallet'
+import * as dotenv from 'dotenv'
+import { withRetries } from './retries'
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -100,7 +94,9 @@ export async function refundEscrowContract(
 
                 // Obtener UTXOs para el signer
                 const address = privateKey.toAddress()
-                const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address)
+                const allUtxos = await withRetries(() =>
+                    provider.listUnspent(address)
+                ) //await provider.listUnspent(address)
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -110,17 +106,17 @@ export async function refundEscrowContract(
                 }
 
                 const signer = new GNWallet(allPrivateKeys, provider, {
-                    targetUtxos: 50,   
-                    dustLimit: 546,    
-                    cacheTTL: 30000    
-                });
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000,
+                })
                 await instance.connect(signer)
                 //const lockTime = Math.floor(Date.now() / 1000)
 
                 const { tx: unlockTx } = await withRetries(async () => {
                     // Conectamos el signer antes de intentar la llamada
                     await instance.connect(signer)
-                    
+
                     // Tiempo actual para nLockTime
                     const lockTime = Math.floor(Date.now() / 1000)
 
@@ -130,7 +126,7 @@ export async function refundEscrowContract(
                         {
                             pubKeyOrAddrToSign: publicKeys,
                             lockTime: lockTime,
-                            utxos: confirmedUtxos
+                            utxos: confirmedUtxos,
                         } as MethodCallOptions<Escrowcontract>
                     )
                 })

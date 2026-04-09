@@ -1,17 +1,11 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Escrowcontract } from './src/contracts/escrowcontract'
-import {
-    bsv,
-    findSigs,
-    MethodCallOptions,
-    PubKey,
-    UTXO,
-} from 'scrypt-ts'
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
-import { GNWallet } from 'gn-wallet';
-import { withRetries } from './retries';
-import * as dotenv from 'dotenv';
+import { bsv, findSigs, MethodCallOptions, PubKey, UTXO } from 'scrypt-ts'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+import { GNWallet } from 'gn-wallet'
+import { withRetries } from './retries'
+import * as dotenv from 'dotenv'
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -104,7 +98,9 @@ export async function payEscrowContract(
                 // Obtener UTXOs para el signer
                 const address = privateKey.toAddress()
                 //const allUtxos = await provider.listUnspent(address);
-                const allUtxos = await withRetries(() => provider.listUnspent(address))
+                const allUtxos = await withRetries(() =>
+                    provider.listUnspent(address)
+                )
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -114,10 +110,10 @@ export async function payEscrowContract(
                 }
 
                 const signer = new GNWallet(allPrivateKeys, provider, {
-                    targetUtxos: 50,   
-                    dustLimit: 546,    
-                    cacheTTL: 30000    
-                });
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000,
+                })
 
                 await instance.connect(signer)
 
@@ -130,14 +126,14 @@ export async function payEscrowContract(
                         pubKeyOrAddrToSign: publicKeys,
                     } as MethodCallOptions<Escrowcontract>
                 )*/
-               const { tx: unlockTx } = await withRetries(async () => {
+                const { tx: unlockTx } = await withRetries(async () => {
                     await instance.connect(signer)
                     return await instance.methods.pay(
                         (sigResps) => findSigs(sigResps, publicKeys),
                         publicKeys.map((pk) => PubKey(pk.toByteString())),
                         {
                             pubKeyOrAddrToSign: publicKeys,
-                            utxos: confirmedUtxos // Opcional: pasar UTXOs directamente
+                            utxos: confirmedUtxos, // Opcional: pasar UTXOs directamente
                         } as MethodCallOptions<Escrowcontract>
                     )
                 })

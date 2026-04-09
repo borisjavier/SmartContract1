@@ -1,18 +1,11 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Escrowcontract, SIGS } from './src/contracts/escrowcontract'
-import {
-    bsv,
-    FixedArray,
-    Addr,
-    PubKey,
-    hash160,
-    UTXO,
-} from 'scrypt-ts'
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
-import { GNWallet } from 'gn-wallet';
-import { withRetries } from './retries';
-import * as dotenv from 'dotenv';
+import { bsv, FixedArray, Addr, PubKey, hash160, UTXO } from 'scrypt-ts'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+import { GNWallet } from 'gn-wallet'
+import { withRetries } from './retries'
+import * as dotenv from 'dotenv'
 
 const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
@@ -113,7 +106,9 @@ export async function deployEscrowContract(
         for (let i = 0; i < attempts; i++) {
             try {
                 const address = privateKey.toAddress()
-                const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address)
+                const allUtxos = await withRetries(() =>
+                    provider.listUnspent(address)
+                ) //await provider.listUnspent(address)
                 const confirmedUtxos = getConfirmedUtxos(allUtxos)
 
                 if (confirmedUtxos.length === 0) {
@@ -123,10 +118,10 @@ export async function deployEscrowContract(
                 }
 
                 const signer = new GNWallet(privateKey, provider, {
-                    targetUtxos: 50,   
-                    dustLimit: 546,    
-                    cacheTTL: 30000    
-                });
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000,
+                })
 
                 const contract = new Escrowcontract(
                     addresses,

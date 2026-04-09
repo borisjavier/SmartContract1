@@ -87,7 +87,7 @@ async function payEscrowContract(params) {
                 if (confirmedUtxos.length === 0) {
                     throw new Error('No confirmed UTXOs available for transaction');
                 }
-                const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
+                const signer = new gn_wallet_1.GNWallet(allPrivateKeys, provider, {
                     targetUtxos: 50,
                     dustLimit: 546,
                     cacheTTL: 30000
