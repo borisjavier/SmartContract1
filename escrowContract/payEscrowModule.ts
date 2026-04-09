@@ -1,9 +1,9 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Escrowcontract } from './src/contracts/escrowcontract'
-import { bsv, findSigs, MethodCallOptions, TestWallet, PubKey, UTXO } from 'scrypt-ts'
+import { bsv, findSigs, MethodCallOptions, PubKey, UTXO } from 'scrypt-ts'
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
-//import { GNWallet } from 'gn-wallet'
+import { GNWallet } from 'gn-wallet'
 import { withRetries } from './retries'
 import * as dotenv from 'dotenv'
 
@@ -109,11 +109,11 @@ export async function payEscrowContract(
                     )
                 }
 
-                const signer = new TestWallet(privateKey, provider) /**, {
+                const signer = new GNWallet(allPrivateKeys, provider, {
                     targetUtxos: 50,
                     dustLimit: 546,
                     cacheTTL: 30000,
-                } */
+                }) 
 
                 await instance.connect(signer)
 

@@ -95,7 +95,7 @@ async function deployEscrowContract(params) {
                 const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
                     targetUtxos: 50,
                     dustLimit: 546,
-                    cacheTTL: 30000
+                    cacheTTL: 30000,
                 });
                 const contract = new escrowcontract_1.Escrowcontract(addresses, params.lockTimeMin);
                 await contract.connect(signer);

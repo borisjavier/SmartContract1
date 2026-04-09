@@ -21,10 +21,10 @@ async function withRetries(fn, maxAttempts = 3) {
             }
             const waitTime = attempt * 2000;
             console.warn(`⚠️ [Network] Intento ${attempt}/${maxAttempts} fallido (Rate Limit). Reintentando en ${waitTime}ms...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
+            await new Promise((resolve) => setTimeout(resolve, waitTime));
         }
     }
-    throw new Error("Fallo tras agotar todos los reintentos.");
+    throw new Error('Fallo tras agotar todos los reintentos.');
 }
 exports.withRetries = withRetries;
 //# sourceMappingURL=retries.js.map

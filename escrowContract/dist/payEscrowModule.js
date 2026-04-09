@@ -90,7 +90,7 @@ async function payEscrowContract(params) {
                 const signer = new gn_wallet_1.GNWallet(allPrivateKeys, provider, {
                     targetUtxos: 50,
                     dustLimit: 546,
-                    cacheTTL: 30000
+                    cacheTTL: 30000,
                 });
                 await instance.connect(signer);
                 /*const { tx: unlockTx } = await instance.methods.pay(
@@ -106,7 +106,7 @@ async function payEscrowContract(params) {
                     await instance.connect(signer);
                     return await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSigs)(sigResps, publicKeys), publicKeys.map((pk) => (0, scrypt_ts_1.PubKey)(pk.toByteString())), {
                         pubKeyOrAddrToSign: publicKeys,
-                        utxos: confirmedUtxos // Opcional: pasar UTXOs directamente
+                        utxos: confirmedUtxos, // Opcional: pasar UTXOs directamente
                     });
                 });
                 console.log('✅ Escrow contract pay method called successfully: ', unlockTx.id);

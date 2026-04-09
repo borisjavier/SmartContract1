@@ -1,7 +1,6 @@
 import { Escrowcontract, SIGS } from './src/contracts/escrowcontract'
 import {
     bsv,
-    TestWallet,
     Addr,
     FixedArray,
     hash160,
@@ -9,7 +8,8 @@ import {
     UTXO,
 } from 'scrypt-ts'
 
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet'
 
 import * as dotenv from 'dotenv'
 
@@ -90,7 +90,7 @@ async function main() {
 
                 console.log(`Found ${confirmedUtxos.length} confirmed UTXOs`)
 
-                const signer = new TestWallet(privateKey, provider)
+                const signer = new GNWallet(privateKey, provider)
 
                 if (confirmedUtxos.length === 0) {
                     throw new Error(

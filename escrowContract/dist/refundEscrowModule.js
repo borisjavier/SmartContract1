@@ -90,7 +90,7 @@ async function refundEscrowContract(params) {
                 const signer = new gn_wallet_1.GNWallet(allPrivateKeys, provider, {
                     targetUtxos: 50,
                     dustLimit: 546,
-                    cacheTTL: 30000
+                    cacheTTL: 30000,
                 });
                 await instance.connect(signer);
                 //const lockTime = Math.floor(Date.now() / 1000)
@@ -102,7 +102,7 @@ async function refundEscrowContract(params) {
                     return await instance.methods.refundDeadline((sigResps) => (0, scrypt_ts_1.findSigs)(sigResps, publicKeys), publicKeys.map((pk) => (0, scrypt_ts_1.PubKey)(pk.toByteString())), {
                         pubKeyOrAddrToSign: publicKeys,
                         lockTime: lockTime,
-                        utxos: confirmedUtxos
+                        utxos: confirmedUtxos,
                     });
                 });
                 /*const { tx: unlockTx } = await instance.methods.refundDeadline(

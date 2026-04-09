@@ -4,12 +4,14 @@ import {
     findSigs,
     MethodCallOptions,
     PubKey,
-    TestWallet,
     SignatureResponse,
     UTXO,
 } from 'scrypt-ts'
 
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
+//        TestWallet,
+
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNWallet } from 'gn-wallet'
 
 import * as dotenv from 'dotenv'
 
@@ -115,7 +117,8 @@ async function main(
                     )
                 }
 
-                const publicKeys = allPrivateKeys.map((pk) => pk.publicKey)
+                const publicKeys = allPrivateKeys.map((pk) => pk.publicKey);
+                console.log(`publicKeys: ${publicKeys}`)
                 const address = privateKey.toAddress()
                 //const addresses = allPrivateKeys.map(pk => pk.toAddress());
                 const allUtxos = await provider.listUnspent(address)
@@ -127,7 +130,12 @@ async function main(
                     )
                 }
 
-                const signer = new TestWallet(allPrivateKeys, provider)
+                const signer = new GNWallet(allPrivateKeys, provider, {
+                    targetUtxos: 50,
+                    dustLimit: 546,
+                    cacheTTL: 30000,
+                })
+                /** */
 
                 await instance.connect(signer)
 
@@ -188,15 +196,15 @@ async function main(
 }
 
 const participantKeys = [
-    'L3ACtYZxJwMNs4h8pagNsC2B8t7iWB6Zk4Ffb2o65qYakkHdPmqb',
-    'KxgAsLj2Db5wanVL9bahW7ETAWm9ujyYouGxyR1p4MDPxpVvf6tY',
-    'KxWDwzqrHSoM6N2VeFJZHXS54enbY1EgRpcRrR5BwKPBNLXGZLJm',
-    'L1jeCD1urUGLhK5EMv4zxwei2BaQJpQhWikAcP3m5ZWz6oDHdSyX',
-    'Kz3EyUNUNisjjXcKfNkRyvKFViM2tKrQzbE8qoXmmskJ2jawe5M8',
+    //'L3ACtYZxJwMNs4h8pagNsC2B8t7iWB6Zk4Ffb2o65qYakkHdPmqb', //038e5022af542f137c6125a8aac70cac6ade4f20ebcd591d5b75567b2c7d7d69b1
+    'KxgAsLj2Db5wanVL9bahW7ETAWm9ujyYouGxyR1p4MDPxpVvf6tY', //0349dbb90d3392b029b35567f087694328028e9e5f1188601da0c8b330d40ae64a
+    'KxWDwzqrHSoM6N2VeFJZHXS54enbY1EgRpcRrR5BwKPBNLXGZLJm', //03641f8c39e1ebae3f4a9589be7240edaf0bf788ed954058442606340b32bb0d49
+    'L1jeCD1urUGLhK5EMv4zxwei2BaQJpQhWikAcP3m5ZWz6oDHdSyX'//, //024b879cb0b0b96f73f0587fc083e5a1e7dee89f26f17cf25e4f1affefecc6ad1d
+    //'Kz3EyUNUNisjjXcKfNkRyvKFViM2tKrQzbE8qoXmmskJ2jawe5M8', //02776014836ed5fc5e08cb66468ada039af0cb81c1b21e21a4a2bb58d3238bbd7d
 ] //OJO AQUÍ, NUMERO DE FIRMAS INSUFICIENTE, QUITÉ LA PRIMERA POR SER LA DEL PURSE. ¿CÓMO VA?
 
 main(
-    '1d82c1dc9522c0b41be40d414a46c654ed66c7000030130c15ee617013bb81b9',
+    '5ca2972007584d59e209a5957b89b112edad494cb5da97a905b754d8e8a6cae5',
     participantKeys
 )
     .then((result) => {
