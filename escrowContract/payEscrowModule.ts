@@ -109,7 +109,7 @@ export async function payEscrowContract(
                     )
                 }
 
-                const signer = new TestWallet(allPrivateKeys, provider) /**, {
+                const signer = new TestWallet(privateKey, provider) /**, {
                     targetUtxos: 50,
                     dustLimit: 546,
                     cacheTTL: 30000,
