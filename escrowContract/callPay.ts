@@ -204,7 +204,7 @@ const participantKeys = [
 ] //OJO AQUÍ, NUMERO DE FIRMAS INSUFICIENTE, QUITÉ LA PRIMERA POR SER LA DEL PURSE. ¿CÓMO VA?
 
 main(
-    '5ca2972007584d59e209a5957b89b112edad494cb5da97a905b754d8e8a6cae5',
+    '843ae27e11844c8aec7a576a6f714ff43b63c8ecb4fd31450669275661311ccd',
     participantKeys
 )
     .then((result) => {
