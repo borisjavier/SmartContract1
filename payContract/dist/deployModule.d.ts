@@ -8,16 +8,11 @@ export type DeployParams = {
     quarks: number;
     purse: string;
 };
-export type PaymentStateItem = {
-    timestamp: string;
-    txid: string;
-};
-export type PaymentState = PaymentStateItem[];
 export type DeploymentResult = {
     contractId: string;
-    state: PaymentState;
+    state: string;
     addressOwner: string;
     addressGN: string;
-    paymentQuarks: bigint;
+    paymentQuarks: string;
 };
 export declare function deployContract(params: DeployParams): Promise<DeploymentResult>;

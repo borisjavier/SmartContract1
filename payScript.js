@@ -1,17 +1,24 @@
-const { checkCache, clearContractCache, dynamicImport, restoreArtifacts, getDataPaymentsSize } = require('./utilities');
+const { dynamicImport } = require('./utilities');
 const path = require('path');
 
 const contractDir = path.resolve(__dirname, './payContract');
+let payScriptFromModule = null;
 
 async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFunction) {
     try {
-
+        // Mapeamos a BigInt en caso de que la función de TS los siga requiriendo en la firma,
+        // aunque internamente el contrato lea desde la blockchain.
+        const bigIntArrayDatas = datas ? datas.map(num => BigInt(num).toString()) : [];
         //const bigIntArrayDatas = datas.map(num => `${num}`).join(', ');
-        const bigIntArrayDatas = datas.map(num => BigInt(num).toString());
+        //const bigIntArrayDatas = datas.map(num => BigInt(num).toString());
         //const formattedTxids = JSON.stringify(txids)
         //const bigNumberQtyTokens = `${qtyT}`;
         const safeQtyTokens = qtyT !== undefined ? qtyT : 0;
-        if(qtyT === 0) {console.warn('qty es indefinido en este punto.')}
+
+        if(safeQtyTokens === 0) {
+            console.warn('qtyT es indefinido o cero en este punto.');
+        }
+        //if(qtyT === 0) {console.warn('qty es indefinido en este punto.')}
 
         const paymentData = {
             txId: lastStateTxid,
@@ -51,82 +58,40 @@ async function createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPu
     }
 }
 
-let payScriptFromModule = null;
-
-
-      async function createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse) {
-        try {
-            const { tsSize, jsonSize, source } = await getDataPaymentsSize();
-            console.log(`Tamaño actual: TS=${tsSize}, JSON=${jsonSize || "N/A"}`);
-                if (tsSize !== size || (jsonSize && jsonSize !== size)) {
-                    console.log(`Se requiere cambio de tamaño (${size})`);
-                    const isCached = await checkCache(size);
-                    if (!isCached) {
-                        throw new Error(`No hay caché para tamaño ${size}`);
-                    }
-                    console.log(`Restaurando artifacts desde caché para size ${size}.`);
-                    await restoreArtifacts(size);
-
-                    // 3. Validación estricta post-restauración
-                    const newSizes = await getDataPaymentsSize();
-                    if (newSizes.tsSize !== size) {
-                        throw new Error(
-                            `Error crítico: Tamaño en TS (${newSizes.tsSize}) no coincide con ${size}`
-                        );
-                    }
-
-                    if (newSizes.jsonSize && newSizes.jsonSize !== size) {
-                        throw new Error(
-                            `Error crítico: Tamaño en JSON (${newSizes.jsonSize}) no coincide con ${size}`
-                        );
-                    }
-
-                    await clearContractCache();
-                    console.log(`✅ Artefactos restaurados y caché limpiada para size ${size}`);
-
-                    
-                    const payScriptModule = await dynamicImport(
-                        path.resolve(contractDir, 'dist', 'payScriptModule.js')
-                    );
-
-                    payScriptFromModule = payScriptModule.pay;//payScriptFunction
-                }
-            
-            if (!payScriptFromModule) {
-                const payScriptModule = await dynamicImport(
-                    path.resolve(contractDir, 'dist', 'payScriptModule.js')
-                );
-                payScriptFromModule = payScriptModule.pay;
-            }
-    
-            // Llamar a `createAndPay` para ejecutar el script de pago
-            console.log('Llamando payScriptModule...');//lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey
-            const result = await createAndPay(lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFromModule);
-            console.log('Pago registrado exitosamente.');
-            return result;
-    
-        } catch (error) {
-            throw new Error(`Error en payScript [Runservice]: ${error.message}`);
-        }
-    }
-
-
     
     async function runPay(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse) {
         try {
-            // Llamar a `createPayScriptAndCall` y esperar el resultado
-            const result = await createPayScriptAndCall(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse);
-    
-            // Verificar que el resultado sea válido
+            // 1. PATRÓN SINGLETON PARA LA CACHÉ EN MEMORIA
+            if (!payScriptFromModule) {
+                const finalPath = path.resolve(contractDir, 'dist', 'payScriptModule.js');
+                console.log(`🔍 Cargando módulo de pago en memoria por primera vez desde: ${finalPath}`);
+
+                const payScriptModule = await dynamicImport(finalPath);
+                payScriptFromModule = payScriptModule.pay;
+
+                if (!payScriptFromModule) {
+                    throw new Error("No se pudo cargar la función 'pay' del módulo.");
+                }
+            } else {
+                console.log('⚡ Módulo de pago recuperado instantáneamente desde la caché en memoria.');
+            }
+
+            // 2. EJECUTAR PAGO
+            console.log('Llamando payScriptModule...');
+            const result = await createAndPay(
+                lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse, payScriptFromModule
+            );
+
+            // 3. VALIDAR Y RETORNAR
             if (result && typeof result === 'object' && result.lastStateTxid) {
-                console.log('Proceso completado exitosamente. Pago efectuado:', JSON.stringify(result, null, 2));
-                return result;  // Retorna el resultado para su posterior uso
+                console.log('✅ Pago registrado exitosamente en la blockchain.');
+                return result;
             } else {
                 throw new Error('La respuesta del llamado no es válida o no contiene lastStateTxid.');
             }
     
         } catch (error) {
-            console.error('Error en el proceso de creación o llamado:', error.message);
+            console.error(`Error en el proceso de pago: ${error.message}`);
             throw error;  // Propagamos el error para ser manejado en niveles superiores
         }
     }

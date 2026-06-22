@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pay = void 0;
-const paycontract_1 = require("./src/contracts/paycontract"); //Timestamp,
+const paycontract_1 = require("./src/contracts/paycontract"); // O paycontracto1, asegúrate del nombre
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const scrypt_ts_1 = require("scrypt-ts");
@@ -32,15 +32,12 @@ const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const gn_wallet_1 = require("gn-wallet");
 const dotenv = __importStar(require("dotenv"));
 const retries_1 = require("./retries");
-// Cargar el archivo .env
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
 function getConfirmedUtxos(utxos) {
     return utxos;
 }
-//const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
 async function pay(params) {
-    console.log('params.datas: ', params.datas);
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
@@ -52,15 +49,14 @@ async function pay(params) {
         throw new Error("Owner public key is required");
     }
     const woc_api_key = process.env.WOC_API_KEY;
-    //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
     const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key, '', {
         bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app'
     });
     const address = privateKey.toAddress();
-    const allUtxos = await (0, retries_1.withRetries)(() => provider.listUnspent(address)); //await provider.listUnspent(address);
+    const allUtxos = await (0, retries_1.withRetries)(() => provider.listUnspent(address));
     const confirmedUtxos = getConfirmedUtxos(allUtxos);
     if (confirmedUtxos.length === 0) {
-        throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
+        throw new Error("No hay UTXOs confirmados disponibles para el pago");
     }
     const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
         targetUtxos: 50,
@@ -72,76 +68,51 @@ async function pay(params) {
         throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
     }
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
-    // Cargar artefacto del contrato
     await paycontract_1.PaymentContract.loadArtifact(artifact);
-    // Cargar instancia del contrato desde la blockchain            
+    // 1. Cargar instancia del contrato desde la blockchain            
     const txResponse = await provider.getTransaction(params.txId);
     const instance = paycontract_1.PaymentContract.fromTx(txResponse, params.atOutputIndex);
-    // Preparar constantes
-    const tx0 = (0, scrypt_ts_1.toByteString)('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
+    // 2. Constantes del nuevo pago
     const currentDate = BigInt(Math.floor(Date.now() / 1000));
-    //const currentDate: bigint = BigInt(Math.floor(Date.now() / 1000));
-    const txIdPago = (0, scrypt_ts_1.toByteString)(params.txidPago);
-    //const txIdPago = toByteString(txidPago);//obtida da publicação da transação GN
-    // Convertir los arrays de entrada a FixedArray
-    const dataPayments = (0, scrypt_ts_1.fill)({ timestamp: 0n, txid: tx0 }, paycontract_1.N);
-    for (let i = 0; i < paycontract_1.N; i++) {
-        dataPayments[i] = {
-            timestamp: BigInt(params.datas[i]),
-            txid: (0, scrypt_ts_1.toByteString)(params.txids[i] || tx0.toString()),
-        };
-    }
-    // Preparar el próximo estado
-    let isValid = true;
-    let updated = false;
-    for (let i = 0; i < paycontract_1.N; i++) {
-        if (!updated && dataPayments[i].timestamp < currentDate && dataPayments[i].txid === tx0) {
-            // 1. Llenamos el slot primero
-            dataPayments[i] = {
-                timestamp: currentDate,
-                txid: txIdPago,
-            };
-            // 2. Si este slot que acabamos de llenar era el último disponible, invalidamos el contrato
-            if (i === paycontract_1.N - 1) {
-                isValid = false;
-            }
-            // 3. Marcamos como actualizado para detener el bucle
-            updated = true;
-        }
-    }
-    if (dataPayments.length !== paycontract_1.N) {
-        throw new Error(`Longitud inválida de dataPayments: esperado ${paycontract_1.N}, obtenido ${dataPayments.length}`);
-    }
-    console.log(`dataPayments es: ${JSON.stringify(dataPayments)}`);
-    // Crear la próxima instancia
-    await instance.connect(signer); //getDefaultSigner(privateKey)
-    const nextInstance = instance.next();
-    nextInstance.dataPayments = dataPayments;
-    nextInstance.isValid = isValid;
-    nextInstance.qtyTokens = BigInt(params.qtyTokens);
-    // Conectar la instancia al signer
+    const txIdPagoHex = params.txidPago; // 64 caracteres hexadecimales
+    const qtyPago = BigInt(params.qtyTokens);
     await instance.connect(signer);
+    const nextInstance = instance.next();
+    // ----------------------------------------------------------------------
+    // 3. MAGIA OFF-CHAIN: Manipulación directa del Buffer Binario
+    // ----------------------------------------------------------------------
+    const currentIndex = Number(instance.paymentsCount);
+    const max = Number(instance.maxPayments);
+    if (currentIndex >= max) {
+        throw new Error("El contrato ya ha registrado el número máximo de pagos.");
+    }
+    // Cargamos el ledger actual en un Buffer de Node.js
+    const ledgerBuffer = Buffer.from(instance.paymentsLedger, 'hex');
+    const offset = currentIndex * 56; // Salto directo O(1) al bloque que toca editar
+    // Escribimos los nuevos datos respetando la estructura de 56 bytes:
+    // [0-8 bytes] scheduledDate (No se toca)
+    // [8-16 bytes] realTimestamp (Escribimos currentDate en Little Endian)
+    ledgerBuffer.writeBigInt64LE(currentDate, offset + 8);
+    // [16-48 bytes] txid (Escribimos el txid en hexadecimal)
+    ledgerBuffer.write(txIdPagoHex, offset + 16, 32, 'hex');
+    // [48-56 bytes] qtyPago (Escribimos los tokens en Little Endian)
+    ledgerBuffer.writeBigInt64LE(qtyPago, offset + 48);
+    // Asignamos el buffer modificado a la próxima instancia
+    nextInstance.paymentsLedger = (0, scrypt_ts_1.toByteString)(ledgerBuffer.toString('hex'));
+    // Actualizamos el contador y la validez
+    nextInstance.paymentsCount = instance.paymentsCount + 1n;
+    if (nextInstance.paymentsCount === instance.maxPayments) {
+        nextInstance.isValid = false;
+    }
     const pubKey = (0, scrypt_ts_1.PubKey)(privateKey.publicKey.toHex());
     const publicKey = privateKey.publicKey;
-    // Llamar al método del contrato
+    // 4. Llamada al contrato
     try {
-        /*const { tx: unlockTx } = await instance.methods.pay(
-            (sigResps) => findSig(sigResps, publicKey),
-            pubKey,
-            currentDate,
-            txIdPago,
-            {
-                next: {
-                    instance: nextInstance,
-                    balance: instance.balance,
-                },
-                pubKeyOrAddrToSign: publicKey,
-            } as MethodCallOptions<PaymentContract>
-        );*/
         const { tx: unlockTx } = await (0, retries_1.withRetries)(async () => {
-            // Aseguramos conexión antes de cada intento de llamada
             await instance.connect(signer);
-            return await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSig)(sigResps, publicKey), pubKey, currentDate, txIdPago, {
+            return await instance.methods.pay((sigResps) => (0, scrypt_ts_1.findSig)(sigResps, publicKey), pubKey, currentDate, (0, scrypt_ts_1.toByteString)(txIdPagoHex), 
+            // PRECAUCIÓN: Revisa si qtyPago debe pasar a la llamada aquí
+            {
                 next: {
                     instance: nextInstance,
                     balance: instance.balance,
@@ -149,13 +120,10 @@ async function pay(params) {
                 pubKeyOrAddrToSign: publicKey,
             });
         });
-        // Preparar resultado
+        // 5. Preparar resultado limpio
         const result = {
             lastStateTxid: unlockTx.id,
-            state: nextInstance.dataPayments.map(p => ({
-                timestamp: p.timestamp.toString(),
-                txid: p.txid
-            })),
+            state: nextInstance.paymentsLedger,
             addressGN: (0, scrypt_ts_1.Addr)(nextInstance.addressGN).toString(),
             amountGN: nextInstance.amountGN.toString(),
             isValid: nextInstance.isValid

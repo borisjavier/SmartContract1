@@ -1,241 +1,153 @@
-
-  import {
-  SmartContract,
-  method,
-  prop,
-  assert,
-  PubKey,
-  Sig,
-  Addr,
-  hash256,
-  ByteString,
-  FixedArray,
-  toByteString,
-  fill
+import {
+    SmartContract,
+    method,
+    prop,
+    assert,
+    PubKey,
+    Sig,
+    Addr,
+    hash256,
+    ByteString,
+    slice,
+    int2ByteString
 } from 'scrypt-ts';
 
-export type Timestamp = bigint
-export type TxId = ByteString
-
-export type Payment = {
-  timestamp: Timestamp
-  txid: TxId
-}
-
-export const N = 12;
-
-export type Payments = FixedArray<Payment, typeof N>
-
-
 export class PaymentContract extends SmartContract {
-  @prop(true)
-  owner: Addr;
+    @prop(true)
+    owner: Addr;
 
-  @prop()
-  readonly adminPubKey: PubKey;
+    @prop()
+    readonly adminPubKey: PubKey;
 
-  @prop(true)
-  addressGN: Addr;
+    @prop(true)
+    addressGN: Addr;
 
-  @prop(true)
-  amountGN: bigint;
+    @prop(true)
+    amountGN: bigint;
 
-  @prop(true)
-  qtyTokens: bigint;
+    @prop(true)
+    qtyTokens: bigint;
 
-  @prop(true)
-  dataPayments: Payments;
+    // EL ÚNICO CONTENEDOR: Aquí vive todo el arreglo serializado de fechas y pagos
+    @prop(true)
+    paymentsLedger: ByteString;
 
-  @prop(true)
-  isValid: boolean;
+    @prop(true)
+    paymentsCount: bigint;
 
-  @prop(true)
-  isOwner: boolean;
+    @prop()
+    readonly maxPayments: bigint; // Límite dinámico (12, 24, 100, etc.)
 
-  @prop()
-  readonly EMPTY: TxId;
+    @prop(true)
+    isValid: boolean;
 
+    @prop(true)
+    isOwner: boolean;
 
-  constructor(
-      owner: Addr,
-      adminPubKey: PubKey,
-      addressGN: Addr,
-      amountGN: bigint,
-      qtyTokens: bigint,
-      datas: FixedArray<Timestamp, typeof N>,
-      txids: FixedArray<ByteString, typeof N>
-  ) {
-      super(...arguments);
-      this.owner = owner;
-      this.adminPubKey = adminPubKey;
-      this.addressGN = addressGN;
-      this.amountGN = amountGN;
-      this.qtyTokens = qtyTokens;
-      this.dataPayments = fill({
-          timestamp: 0n,
-          txid: toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836')
-      }, N);
-      for (let i = 0; i < N; i++) {
-          this.dataPayments[i] = {
-              timestamp: datas[i],
-              txid: txids[i]
-          }
-      }
-      this.isValid = true;
-      this.isOwner = true;
-      this.EMPTY = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'); //'0' is not a valid hex so I took this old useless transaction as a zero value
-  }
-
-  @method()
-  public pay(    
-      signature: Sig, 
-      publicKey: PubKey,
-      currentDate: bigint,
-      txIdPago: ByteString
-  ) {
-
-      assert(this.checkSig(signature, publicKey), 'Signature verification failed')
-
-      assert(this.isValid, 'Contract paid. No longer valid.'); 
-
-      this.updateArr(currentDate, txIdPago)
-      
-      let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value)
-      if (this.changeAmount > 0n) {
-          outputs += this.buildChangeOutput()
-      }
-      this.debug.diffOutputs(outputs);
-      assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
-  }
-
-      /*@method()
-      updateArr(currentDate: Timestamp, txid: TxId): void {
-          let done = true;
-
-          for (let i = 0; i < N; i++) {
-              if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-                  if (i === N - 1 && this.filledTxids(this.dataPayments)) {
-                      this.isValid = false;
-                  }
-                  this.dataPayments[i] = {
-                      timestamp: currentDate,
-                      txid: txid
-                  };
-                  done = false;
-              }
-          }
-      }*/
-
-@method()
-updateArr(currentDate: Timestamp, txid: TxId): void {
-    let done = true;
-
-    for (let i = 0; i < N; i++) {
-        if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-            // Registrar el pago
-            this.dataPayments[i] = {
-                timestamp: currentDate,
-                txid: txid
-            };
-            // Si es el último slot, el contrato queda inválido (terminado)
-            if (i === N - 1) {
-                this.isValid = false;
-            }
-            done = false;
-        }
-    }
-}
-      
-
-/*@method()
-filledTxids(dataPayments: Payments): boolean {
-    let allFilled = true;
-
-    if (N < 2) {
-        allFilled = (dataPayments[0].txid !== this.EMPTY); 
-    } else {
-        let done = true;
-
-        for (let i = 0; i < N; i++) { 
-            if (i < N - 1) { 
-                if (done === true && dataPayments[i].txid === this.EMPTY) {
-                    allFilled = false;
-                    done = false;
-                }
-            } 
-        }
+    constructor(
+        owner: Addr,
+        adminPubKey: PubKey,
+        addressGN: Addr,
+        amountGN: bigint,
+        qtyTokens: bigint,
+        maxPayments: bigint,
+        initialLedger: ByteString // El backend le pasa el bloque de fechas pre-programadas
+    ) {
+        super(...arguments);
+        this.owner = owner;
+        this.adminPubKey = adminPubKey;
+        this.addressGN = addressGN;
+        this.amountGN = amountGN;
+        this.qtyTokens = qtyTokens;
+        
+        this.paymentsLedger = initialLedger;
+        this.paymentsCount = 0n;
+        this.maxPayments = maxPayments;
+        
+        this.isValid = true;
+        this.isOwner = true;
     }
 
-    assert(allFilled, 'Some txids are still empty');
+    @method()
+    public pay(    
+        signature: Sig, 
+        publicKey: PubKey,
+        realTimestamp: bigint,
+        txid: ByteString, // Debe ser exactamente de 32 bytes
+        qtyPago: bigint
+    ) {
+        assert(publicKey === this.adminPubKey, 'Unauthorized public key');
+        assert(this.checkSig(signature, publicKey), 'Signature verification failed');
+        assert(this.isValid, 'Contract paid. No longer valid.'); 
+        assert(this.paymentsCount < this.maxPayments, 'All payment slots are already filled');
 
-    return allFilled;  
-}*/
+        // Cada registro/slot mide exactamente 56 bytes
+        const slotSize = 56n;
+        const offset = this.paymentsCount * slotSize;
 
-  
-  @method() 
-  public transferOwnership( 
-      signature: Sig, 
-      publicKey: PubKey,
-      oldOwner: Addr,
-      newOwner: Addr,
-      newAddressGN: Addr
-  ) {
-      // admin verification
-      assert(this.checkSig(signature, publicKey), 'Signature verification failed')
+        // 1. Extraemos los primeros 8 bytes del slot actual (la fecha programada original) para conservarla
+        const scheduledDateBytes = slice(this.paymentsLedger, offset, offset + 8n);
 
-      //verify owner
-      this.verifyId(oldOwner);
-      assert(this.isOwner, 'Not the owner of this contract')
-      // contract is still valid
-      assert(this.isValid, 'Contract is no longer valid');
+        // 2. Empaquetamos el nuevo registro combinando la programación y los datos reales del pago
+        const newRecord = scheduledDateBytes + 
+                          int2ByteString(realTimestamp, 8n) + 
+                          txid + 
+                          int2ByteString(qtyPago, 8n);
 
-      this.owner = newOwner;//must validate identity in a different contract
-      this.addressGN = newAddressGN;
+        // 3. Re-inyectamos el nuevo slot en la cadena "stringified" usando slicing
+        this.paymentsLedger = slice(this.paymentsLedger, 0n, offset) + 
+                              newRecord + 
+                              slice(this.paymentsLedger, offset + slotSize);
 
+        this.paymentsCount++;
 
-      //TO DO: when transferred, create a contract with data from the last state of this one on behalf of the new owner
-      let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value)
-      if (this.changeAmount > 0n) {
-          outputs += this.buildChangeOutput()
-      }
-      this.debug.diffOutputs(outputs);
-      assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
-  }
+        if (this.paymentsCount === this.maxPayments) {
+            this.isValid = false;
+        }
+        
+        // Covenants obligatorios para actualizar el estado UTXO
+        let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value);
+        if (this.changeAmount > 0n) {
+            outputs += this.buildChangeOutput();
+        }
+        this.debug.diffOutputs(outputs);
+        assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch');
+    }
 
-  @method() 
-  public transferPartial( 
-      signature: Sig, 
-      publicKey: PubKey,
-      oldOwner: Addr,
-      newAmountGN: bigint,
-      newQtyTokens: bigint
-  ) {
-      // admin verification
-      assert(this.checkSig(signature, publicKey), 'Signature verification failed');
+    @method() 
+    public transferOwnership(signature: Sig, publicKey: PubKey, oldOwner: Addr, newOwner: Addr, newAddressGN: Addr) {
+        assert(publicKey === this.adminPubKey, 'Unauthorized public key');
+        assert(this.checkSig(signature, publicKey), 'Signature verification failed');
+        this.verifyId(oldOwner);
+        assert(this.isOwner, 'Not the owner of this contract');
+        assert(this.isValid, 'Contract is no longer valid');
 
-      //verify owner
-      this.verifyId(oldOwner);
-      assert(this.isOwner, 'Not the owner of this contract')
+        this.owner = newOwner;
+        this.addressGN = newAddressGN;
 
-      // contract is still valid
-      assert(this.isValid, 'Contract is no longer valid');
+        let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value);
+        if (this.changeAmount > 0n) { outputs += this.buildChangeOutput(); }
+        assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch');
+    }
 
-      this.amountGN = newAmountGN;
-      this.qtyTokens = newQtyTokens;
+    @method() 
+    public transferPartial(signature: Sig, publicKey: PubKey, oldOwner: Addr, newAmountGN: bigint, newQtyTokens: bigint) {
+        assert(publicKey === this.adminPubKey, 'Unauthorized public key');
+        assert(this.checkSig(signature, publicKey), 'Signature verification failed');
+        this.verifyId(oldOwner);
+        assert(this.isOwner, 'Not the owner of this contract');
+        assert(this.isValid, 'Contract is no longer valid');
 
+        this.amountGN = newAmountGN;
+        this.qtyTokens = newQtyTokens;
 
-      //TO DO: when transferred, create a contract with data from the last state of this one on behalf of the new owner
-      let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value)
-      if (this.changeAmount > 0n) {
-          outputs += this.buildChangeOutput()
-      }
-      this.debug.diffOutputs(outputs);
-      assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch')
-  }
+        let outputs: ByteString = this.buildStateOutput(this.ctx.utxo.value);
+        if (this.changeAmount > 0n) { outputs += this.buildChangeOutput(); }
+        assert(this.ctx.hashOutputs === hash256(outputs), 'hashOutputs mismatch');
+    }
 
-  @method()
-  verifyId(owner: Addr): void {
-      this.isOwner = (this.owner == owner)? true: false;
-  }
-
+    @method()
+    verifyId(owner: Addr): void {
+        this.isOwner = (this.owner == owner) ? true : false;
+    }
 }

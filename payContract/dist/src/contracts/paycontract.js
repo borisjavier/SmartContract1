@@ -6,35 +6,48 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PaymentContract = exports.N = void 0;
+exports.PaymentContract = void 0;
 const scrypt_ts_1 = require("scrypt-ts");
-exports.N = 12;
 class PaymentContract extends scrypt_ts_1.SmartContract {
-    constructor(owner, adminPubKey, addressGN, amountGN, qtyTokens, datas, txids) {
+    constructor(owner, adminPubKey, addressGN, amountGN, qtyTokens, maxPayments, initialLedger // El backend le pasa el bloque de fechas pre-programadas
+    ) {
         super(...arguments);
         this.owner = owner;
         this.adminPubKey = adminPubKey;
         this.addressGN = addressGN;
         this.amountGN = amountGN;
         this.qtyTokens = qtyTokens;
-        this.dataPayments = (0, scrypt_ts_1.fill)({
-            timestamp: 0n,
-            txid: (0, scrypt_ts_1.toByteString)('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836')
-        }, exports.N);
-        for (let i = 0; i < exports.N; i++) {
-            this.dataPayments[i] = {
-                timestamp: datas[i],
-                txid: txids[i]
-            };
-        }
+        this.paymentsLedger = initialLedger;
+        this.paymentsCount = 0n;
+        this.maxPayments = maxPayments;
         this.isValid = true;
         this.isOwner = true;
-        this.EMPTY = (0, scrypt_ts_1.toByteString)('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'); //'0' is not a valid hex so I took this old useless transaction as a zero value
     }
-    pay(signature, publicKey, currentDate, txIdPago) {
+    pay(signature, publicKey, realTimestamp, txid, // Debe ser exactamente de 32 bytes
+    qtyPago) {
+        (0, scrypt_ts_1.assert)(publicKey === this.adminPubKey, 'Unauthorized public key');
         (0, scrypt_ts_1.assert)(this.checkSig(signature, publicKey), 'Signature verification failed');
         (0, scrypt_ts_1.assert)(this.isValid, 'Contract paid. No longer valid.');
-        this.updateArr(currentDate, txIdPago);
+        (0, scrypt_ts_1.assert)(this.paymentsCount < this.maxPayments, 'All payment slots are already filled');
+        // Cada registro/slot mide exactamente 56 bytes
+        const slotSize = 56n;
+        const offset = this.paymentsCount * slotSize;
+        // 1. Extraemos los primeros 8 bytes del slot actual (la fecha programada original) para conservarla
+        const scheduledDateBytes = (0, scrypt_ts_1.slice)(this.paymentsLedger, offset, offset + 8n);
+        // 2. Empaquetamos el nuevo registro combinando la programación y los datos reales del pago
+        const newRecord = scheduledDateBytes +
+            (0, scrypt_ts_1.int2ByteString)(realTimestamp, 8n) +
+            txid +
+            (0, scrypt_ts_1.int2ByteString)(qtyPago, 8n);
+        // 3. Re-inyectamos el nuevo slot en la cadena "stringified" usando slicing
+        this.paymentsLedger = (0, scrypt_ts_1.slice)(this.paymentsLedger, 0n, offset) +
+            newRecord +
+            (0, scrypt_ts_1.slice)(this.paymentsLedger, offset + slotSize);
+        this.paymentsCount++;
+        if (this.paymentsCount === this.maxPayments) {
+            this.isValid = false;
+        }
+        // Covenants obligatorios para actualizar el estado UTXO
         let outputs = this.buildStateOutput(this.ctx.utxo.value);
         if (this.changeAmount > 0n) {
             outputs += this.buildChangeOutput();
@@ -42,97 +55,32 @@ class PaymentContract extends scrypt_ts_1.SmartContract {
         this.debug.diffOutputs(outputs);
         (0, scrypt_ts_1.assert)(this.ctx.hashOutputs === (0, scrypt_ts_1.hash256)(outputs), 'hashOutputs mismatch');
     }
-    /*@method()
-    updateArr(currentDate: Timestamp, txid: TxId): void {
-        let done = true;
-
-        for (let i = 0; i < N; i++) {
-            if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-                if (i === N - 1 && this.filledTxids(this.dataPayments)) {
-                    this.isValid = false;
-                }
-                this.dataPayments[i] = {
-                    timestamp: currentDate,
-                    txid: txid
-                };
-                done = false;
-            }
-        }
-    }*/
-    updateArr(currentDate, txid) {
-        let done = true;
-        for (let i = 0; i < exports.N; i++) {
-            if (done === true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid === this.EMPTY) {
-                // Registrar el pago
-                this.dataPayments[i] = {
-                    timestamp: currentDate,
-                    txid: txid
-                };
-                // Si es el último slot, el contrato queda inválido (terminado)
-                if (i === exports.N - 1) {
-                    this.isValid = false;
-                }
-                done = false;
-            }
-        }
-    }
-    /*@method()
-    filledTxids(dataPayments: Payments): boolean {
-        let allFilled = true;
-    
-        if (N < 2) {
-            allFilled = (dataPayments[0].txid !== this.EMPTY);
-        } else {
-            let done = true;
-    
-            for (let i = 0; i < N; i++) {
-                if (i < N - 1) {
-                    if (done === true && dataPayments[i].txid === this.EMPTY) {
-                        allFilled = false;
-                        done = false;
-                    }
-                }
-            }
-        }
-    
-        assert(allFilled, 'Some txids are still empty');
-    
-        return allFilled;
-    }*/
     transferOwnership(signature, publicKey, oldOwner, newOwner, newAddressGN) {
-        // admin verification
+        (0, scrypt_ts_1.assert)(publicKey === this.adminPubKey, 'Unauthorized public key');
         (0, scrypt_ts_1.assert)(this.checkSig(signature, publicKey), 'Signature verification failed');
-        //verify owner
         this.verifyId(oldOwner);
         (0, scrypt_ts_1.assert)(this.isOwner, 'Not the owner of this contract');
-        // contract is still valid
         (0, scrypt_ts_1.assert)(this.isValid, 'Contract is no longer valid');
-        this.owner = newOwner; //must validate identity in a different contract
+        this.owner = newOwner;
         this.addressGN = newAddressGN;
-        //TO DO: when transferred, create a contract with data from the last state of this one on behalf of the new owner
         let outputs = this.buildStateOutput(this.ctx.utxo.value);
         if (this.changeAmount > 0n) {
             outputs += this.buildChangeOutput();
         }
-        this.debug.diffOutputs(outputs);
         (0, scrypt_ts_1.assert)(this.ctx.hashOutputs === (0, scrypt_ts_1.hash256)(outputs), 'hashOutputs mismatch');
     }
     transferPartial(signature, publicKey, oldOwner, newAmountGN, newQtyTokens) {
-        // admin verification
+        (0, scrypt_ts_1.assert)(publicKey === this.adminPubKey, 'Unauthorized public key');
         (0, scrypt_ts_1.assert)(this.checkSig(signature, publicKey), 'Signature verification failed');
-        //verify owner
         this.verifyId(oldOwner);
         (0, scrypt_ts_1.assert)(this.isOwner, 'Not the owner of this contract');
-        // contract is still valid
         (0, scrypt_ts_1.assert)(this.isValid, 'Contract is no longer valid');
         this.amountGN = newAmountGN;
         this.qtyTokens = newQtyTokens;
-        //TO DO: when transferred, create a contract with data from the last state of this one on behalf of the new owner
         let outputs = this.buildStateOutput(this.ctx.utxo.value);
         if (this.changeAmount > 0n) {
             outputs += this.buildChangeOutput();
         }
-        this.debug.diffOutputs(outputs);
         (0, scrypt_ts_1.assert)(this.ctx.hashOutputs === (0, scrypt_ts_1.hash256)(outputs), 'hashOutputs mismatch');
     }
     verifyId(owner) {
@@ -157,7 +105,13 @@ __decorate([
 ], PaymentContract.prototype, "qtyTokens", void 0);
 __decorate([
     (0, scrypt_ts_1.prop)(true)
-], PaymentContract.prototype, "dataPayments", void 0);
+], PaymentContract.prototype, "paymentsLedger", void 0);
+__decorate([
+    (0, scrypt_ts_1.prop)(true)
+], PaymentContract.prototype, "paymentsCount", void 0);
+__decorate([
+    (0, scrypt_ts_1.prop)()
+], PaymentContract.prototype, "maxPayments", void 0);
 __decorate([
     (0, scrypt_ts_1.prop)(true)
 ], PaymentContract.prototype, "isValid", void 0);
@@ -165,14 +119,8 @@ __decorate([
     (0, scrypt_ts_1.prop)(true)
 ], PaymentContract.prototype, "isOwner", void 0);
 __decorate([
-    (0, scrypt_ts_1.prop)()
-], PaymentContract.prototype, "EMPTY", void 0);
-__decorate([
     (0, scrypt_ts_1.method)()
 ], PaymentContract.prototype, "pay", null);
-__decorate([
-    (0, scrypt_ts_1.method)()
-], PaymentContract.prototype, "updateArr", null);
 __decorate([
     (0, scrypt_ts_1.method)()
 ], PaymentContract.prototype, "transferOwnership", null);

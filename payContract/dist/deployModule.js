@@ -38,6 +38,14 @@ dotenv.config({ path: envPath });
 function getConfirmedUtxos(utxos) {
     return utxos;
 }
+function genDatas(n, l, fechaInicio) {
+    // Verificar compatibilidad de tamaños
+    const fechas = [];
+    for (let i = 0; i < n; i++) {
+        fechas.push(fechaInicio + i * l);
+    }
+    return fechas;
+}
 async function deployContract(params) {
     // Validar parámetros esenciales
     if (!process.env.WOC_API_KEY) {
@@ -84,21 +92,38 @@ async function deployContract(params) {
         dustLimit: 546,
         cacheTTL: 30000
     });
-    // Generar datas usando la función auxiliar
-    const datas = await genDatas(params.n, params.lapse, params.startDate);
-    // Configurar valores iniciales
-    const emptyTxid = (0, scrypt_ts_1.toByteString)('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
-    const txids = (0, scrypt_ts_1.fill)(emptyTxid, params.n);
-    // Preparar claves y direcciones
+    const qtyTokens = BigInt(params.qtyT);
+    const amountQuarks = BigInt(params.quarks);
+    const maxPayments = BigInt(params.n);
     const adminPubKey = (0, scrypt_ts_1.PubKey)(config_1.adminPublicKey);
+    // Generar datas usando la función auxiliar
     const ownerPubKey = scrypt_ts_1.bsv.PublicKey.fromHex(params.ownerPub);
     const ownerAddr = (0, scrypt_ts_1.Addr)(ownerPubKey.toAddress().toByteString());
+    const realAddOwner = scrypt_ts_1.bsv.Address.fromPublicKey(ownerPubKey).toString();
+    // Preparar claves y direcciones
     const gnPubKey = scrypt_ts_1.bsv.PublicKey.fromHex(params.ownerGN);
     const gnAddr = (0, scrypt_ts_1.Addr)(gnPubKey.toAddress().toByteString());
     const realAddGN = scrypt_ts_1.bsv.Address.fromPublicKey(gnPubKey).toString();
-    const realAddOwner = scrypt_ts_1.bsv.Address.fromPublicKey(ownerPubKey).toString();
-    // 1. Carga el artefacto COMPILADO (sin ts-node)
-    // 1. Cargar artefacto usando ruta absoluta
+    // ----------------------------------------------------------------------
+    // 4. MAGIA DEL LEDGER BINARIO: Construcción del Arreglo Stringified
+    // ----------------------------------------------------------------------
+    const scheduledDates = genDatas(params.n, params.lapse, params.startDate);
+    const totalBuffer = Buffer.alloc(params.n * 56); // 56 bytes por slot
+    for (let i = 0; i < params.n; i++) {
+        const offset = i * 56;
+        // Escribir scheduledDate (8 bytes - Little Endian nativo de JS/sCrypt)
+        totalBuffer.writeBigInt64LE(BigInt(scheduledDates[i]), offset);
+        // Escribir realTimestamp inicial (8 bytes en 0)
+        totalBuffer.writeBigInt64LE(0n, offset + 8);
+        // Escribir txid vacío (32 bytes de ceros)
+        totalBuffer.fill(0, offset + 16, offset + 48);
+        // Escribir qtyPago inicial (8 bytes en 0)
+        totalBuffer.writeBigInt64LE(0n, offset + 48);
+    }
+    const initialLedger = (0, scrypt_ts_1.toByteString)(totalBuffer.toString('hex'));
+    // ----------------------------------------------------------------------
+    // 5. Carga de Artefacto e Instanciación
+    // ----------------------------------------------------------------------
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
     if (!fs.existsSync(artifactPath)) {
         throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
@@ -106,7 +131,7 @@ async function deployContract(params) {
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
     await paycontract_1.PaymentContract.loadArtifact(artifact);
     // 2. Crea instancia con parámetros dinámicos
-    const contract = new paycontract_1.PaymentContract(ownerAddr, adminPubKey, gnAddr, BigInt(params.quarks), BigInt(params.qtyT), datas, txids);
+    const contract = new paycontract_1.PaymentContract(ownerAddr, adminPubKey, gnAddr, amountQuarks, qtyTokens, maxPayments, initialLedger);
     // 3. Conecta a la blockchain
     await contract.connect(signer);
     // 4. Despliega y retorna resultado directo
@@ -117,30 +142,13 @@ async function deployContract(params) {
     /*await contract.deploy(1, {
           utxos: confirmedUtxos
       });*/
-    // Preparar resultado
-    const serializedState = contract.dataPayments.map(payment => ({
-        timestamp: payment.timestamp.toString(), // Convertir BigInt a string
-        txid: payment.txid
-    }));
     return {
         contractId: deployTx.id,
-        state: serializedState,
-        addressOwner: realAddOwner, //ownerPubKey.toAddress().toString(), //bsv.Address.fromPublicKey(ownerPubKey).toString();
-        addressGN: realAddGN, //gnPubKey.toAddress().toString(), 
-        paymentQuarks: contract.amountGN
+        state: contract.paymentsLedger, // Retorna la cadena Hex completa del ledger
+        addressOwner: realAddOwner,
+        addressGN: realAddGN,
+        paymentQuarks: contract.amountGN.toString()
     };
 }
 exports.deployContract = deployContract;
-async function genDatas(n, l, fechaInicio) {
-    // Verificar compatibilidad de tamaños
-    if (n !== paycontract_1.N) {
-        throw new Error(`Tamaño requerido (${n}) no coincide con tamaño de artefacto (${paycontract_1.N}). Detenga el proceso.`);
-    }
-    const fechas = (0, scrypt_ts_1.fill)(0n, paycontract_1.N);
-    for (let i = 0; i < paycontract_1.N; i++) {
-        const fecha = BigInt(fechaInicio + i * l);
-        fechas[i] = fecha;
-    }
-    return fechas;
-}
 //# sourceMappingURL=deployModule.js.map

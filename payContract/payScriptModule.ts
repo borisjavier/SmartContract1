@@ -1,59 +1,46 @@
-
-import { PaymentContract, Payment, N } from './src/contracts/paycontract';//Timestamp,
+import { PaymentContract } from './src/contracts/paycontract'; // O paycontracto1, asegúrate del nombre
 import * as path from 'path';
 import * as fs from 'fs';
-import { bsv, PubKey, Addr, toByteString, FixedArray, findSig, fill, MethodCallOptions, UTXO } from 'scrypt-ts';
+import { bsv, PubKey, Addr, toByteString, findSig, MethodCallOptions, UTXO } from 'scrypt-ts';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import { GNWallet } from 'gn-wallet';
 import * as dotenv from 'dotenv';
 import { withRetries } from './retries';
 
-// Cargar el archivo .env
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath })
 
-// Tipos para parámetros
 export type PayParams = {
     txId: string;
     atOutputIndex: number;
-    datas: string[];//FixedArray<Timestamp, typeof N>; // //
-    txids: string[];//FixedArray<string, typeof N>; ////
-    txidPago: string,
-    qtyTokens: number,
-    ownerPubKey: string,
-    purse: string
-};
-
-export type PaymentItem = {
-    timestamp: string;  // BigInt serializado como string
-    txid: string;
+    datas?: string[]; // Ignorado por la nueva lógica binaria
+    txids?: string[]; // Ignorado por la nueva lógica binaria
+    txidPago: string;
+    qtyTokens: number;
+    ownerPubKey: string;
+    purse: string;
 };
 
 export type PayResult = {
     lastStateTxid: string;
-    state: PaymentItem[]; //PaymentState;  // Tipo específico según tu contrato
+    state: string; // Ahora retornamos el String Hexadecimal completo
     addressGN: string;
     amountGN: string;
     isValid: boolean;
 };
 
-
 function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
-    return utxos
+    return utxos;
 }
 
-
-//const privateKey = bsv.PrivateKey.fromWIF(process.env.PRIVATE_KEY || '');
-
 export async function pay(params: PayParams): Promise<PayResult> {
-    console.log('params.datas: ',params.datas);
     if (!process.env.WOC_API_KEY) {
         throw new Error("WOC_API_KEY environment variable is not set");
     }
 
     const privateKey = bsv.PrivateKey.fromWIF(params.purse || '');
     if (!process.env.PRIVATE_KEY) {
-    throw new Error("Private key is required in .env")
+        throw new Error("Private key is required in .env");
     }
 
     if (!params.ownerPubKey) {
@@ -61,123 +48,92 @@ export async function pay(params: PayParams): Promise<PayResult> {
     }
     const woc_api_key = process.env.WOC_API_KEY;
 
-    //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
     const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
         bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
     });
 
     const address = privateKey.toAddress();
-    const allUtxos = await withRetries(() => provider.listUnspent(address)); //await provider.listUnspent(address);
+    const allUtxos = await withRetries(() => provider.listUnspent(address));
     const confirmedUtxos = getConfirmedUtxos(allUtxos);
 
     if (confirmedUtxos.length === 0) {
-            throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
-        }
+        throw new Error("No hay UTXOs confirmados disponibles para el pago");
+    }
 
-    
     const signer = new GNWallet(privateKey, provider, {
-                targetUtxos: 50,   
-                dustLimit: 546,    
-                cacheTTL: 30000    
-            });
+        targetUtxos: 50,   
+        dustLimit: 546,    
+        cacheTTL: 30000    
+    });
 
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
         
-        if (!fs.existsSync(artifactPath)) {
-            throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
-        }
-        
+    if (!fs.existsSync(artifactPath)) {
+        throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
+    }
 
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
-    // Cargar artefacto del contrato
     await PaymentContract.loadArtifact(artifact);
     
-    // Cargar instancia del contrato desde la blockchain            
+    // 1. Cargar instancia del contrato desde la blockchain            
     const txResponse = await provider.getTransaction(params.txId);
-                
-    const instance = PaymentContract.fromTx(txResponse, params.atOutputIndex)
+    const instance = PaymentContract.fromTx(txResponse, params.atOutputIndex);
     
-
-    
-    // Preparar constantes
-    const tx0 = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
+    // 2. Constantes del nuevo pago
     const currentDate = BigInt(Math.floor(Date.now() / 1000));
-    //const currentDate: bigint = BigInt(Math.floor(Date.now() / 1000));
-    const txIdPago = toByteString(params.txidPago);
-    //const txIdPago = toByteString(txidPago);//obtida da publicação da transação GN
+    const txIdPagoHex = params.txidPago; // 64 caracteres hexadecimales
+    const qtyPago = BigInt(params.qtyTokens);
 
-    // Convertir los arrays de entrada a FixedArray
-    const dataPayments: FixedArray<Payment, typeof N> = fill({ timestamp: 0n, txid: tx0 }, N);
-    for (let i = 0; i < N; i++) {
-        dataPayments[i] = {
-            timestamp: BigInt(params.datas[i]),
-            txid: toByteString(params.txids[i] || tx0.toString()),
-        };
-    }
-
-    // Preparar el próximo estado
-    let isValid = true;
-    let updated = false;
-
-    for (let i = 0; i < N; i++) {
-        if (!updated && dataPayments[i].timestamp < currentDate && dataPayments[i].txid === tx0) {
-
-            // 1. Llenamos el slot primero
-            dataPayments[i] = {
-                timestamp: currentDate,
-                txid: txIdPago,
-            };
-
-            // 2. Si este slot que acabamos de llenar era el último disponible, invalidamos el contrato
-            if (i === N - 1) {
-                isValid = false;
-            }
-            
-            // 3. Marcamos como actualizado para detener el bucle
-            updated = true;
-        }
-    }
-
-    if (dataPayments.length !== N) {
-    throw new Error(`Longitud inválida de dataPayments: esperado ${N}, obtenido ${dataPayments.length}`);
-    }   
-    console.log(`dataPayments es: ${JSON.stringify(dataPayments)}`);
-
-    // Crear la próxima instancia
-    await instance.connect(signer); //getDefaultSigner(privateKey)
-    const nextInstance = instance.next();
-    nextInstance.dataPayments = dataPayments;
-    nextInstance.isValid = isValid;
-    nextInstance.qtyTokens = BigInt(params.qtyTokens);
-
-    // Conectar la instancia al signer
     await instance.connect(signer);
+    const nextInstance = instance.next();
+
+    // ----------------------------------------------------------------------
+    // 3. MAGIA OFF-CHAIN: Manipulación directa del Buffer Binario
+    // ----------------------------------------------------------------------
+    const currentIndex = Number(instance.paymentsCount);
+    const max = Number(instance.maxPayments);
+
+    if (currentIndex >= max) {
+        throw new Error("El contrato ya ha registrado el número máximo de pagos.");
+    }
+
+    // Cargamos el ledger actual en un Buffer de Node.js
+    const ledgerBuffer = Buffer.from(instance.paymentsLedger, 'hex');
+    const offset = currentIndex * 56; // Salto directo O(1) al bloque que toca editar
+
+    // Escribimos los nuevos datos respetando la estructura de 56 bytes:
+    // [0-8 bytes] scheduledDate (No se toca)
+    // [8-16 bytes] realTimestamp (Escribimos currentDate en Little Endian)
+    ledgerBuffer.writeBigInt64LE(currentDate, offset + 8);
+    
+    // [16-48 bytes] txid (Escribimos el txid en hexadecimal)
+    ledgerBuffer.write(txIdPagoHex, offset + 16, 32, 'hex');
+    
+    // [48-56 bytes] qtyPago (Escribimos los tokens en Little Endian)
+    ledgerBuffer.writeBigInt64LE(qtyPago, offset + 48);
+
+    // Asignamos el buffer modificado a la próxima instancia
+    nextInstance.paymentsLedger = toByteString(ledgerBuffer.toString('hex'));
+    
+    // Actualizamos el contador y la validez
+    nextInstance.paymentsCount = instance.paymentsCount + 1n;
+    if (nextInstance.paymentsCount === instance.maxPayments) {
+        nextInstance.isValid = false;
+    }
+
     const pubKey = PubKey(privateKey.publicKey.toHex());
     const publicKey = privateKey.publicKey;
 
-    // Llamar al método del contrato
+    // 4. Llamada al contrato
     try {
-        /*const { tx: unlockTx } = await instance.methods.pay(
-            (sigResps) => findSig(sigResps, publicKey),
-            pubKey,
-            currentDate,
-            txIdPago,
-            {
-                next: {
-                    instance: nextInstance,
-                    balance: instance.balance,
-                },
-                pubKeyOrAddrToSign: publicKey,
-            } as MethodCallOptions<PaymentContract>
-        );*/
         const { tx: unlockTx } = await withRetries(async () => {
-            // Aseguramos conexión antes de cada intento de llamada
             await instance.connect(signer);
             return await instance.methods.pay(
                 (sigResps) => findSig(sigResps, publicKey),
                 pubKey,
                 currentDate,
-                txIdPago,
+                toByteString(txIdPagoHex),
+                // PRECAUCIÓN: Revisa si qtyPago debe pasar a la llamada aquí
                 {
                     next: {
                         instance: nextInstance,
@@ -187,15 +143,11 @@ export async function pay(params: PayParams): Promise<PayResult> {
                 } as MethodCallOptions<PaymentContract>
             );
         });
-    
 
-        // Preparar resultado
+        // 5. Preparar resultado limpio
         const result: PayResult = {
             lastStateTxid: unlockTx.id,
-            state: nextInstance.dataPayments.map(p => ({
-                timestamp: p.timestamp.toString(),
-                txid: p.txid
-            })),
+            state: nextInstance.paymentsLedger, 
             addressGN: Addr(nextInstance.addressGN).toString(),
             amountGN: nextInstance.amountGN.toString(),
             isValid: nextInstance.isValid
@@ -207,5 +159,4 @@ export async function pay(params: PayParams): Promise<PayResult> {
         console.error('Contract call failed:', error);
         throw new Error(`Error during contract call: ${error.message}`);
     }
-
 }

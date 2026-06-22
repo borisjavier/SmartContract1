@@ -1,8 +1,3 @@
-
-struct Payment {
-  int timestamp;
-  bytes txid;
-}
 struct __scrypt_ts_Change {  int amount;  Ripemd160 address;}
 
 contract PaymentContract {
@@ -11,35 +6,44 @@ contract PaymentContract {
   @state Ripemd160 addressGN;
   @state int amountGN;
   @state int qtyTokens;
-  @state Payment[12] dataPayments;
+  @state bytes paymentsLedger;
+  @state int paymentsCount;
+  const int maxPayments;
   @state bool isValid;
   @state bool isOwner;
-  const bytes EMPTY;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int[12] datas, bytes[12] txids) {
+  constructor(Ripemd160 owner, PubKey adminPubKey, Ripemd160 addressGN, int amountGN, int qtyTokens, int maxPayments, bytes initialLedger) {
     this.owner = owner;
     this.adminPubKey = adminPubKey;
     this.addressGN = addressGN;
     this.amountGN = amountGN;
     this.qtyTokens = qtyTokens;
-    this.dataPayments = repeat({0, b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836'}, 12);
-    loop (12) : i {
-        this.dataPayments[i] = {datas[i], txids[i]};
-      }
+    this.paymentsLedger = initialLedger;
+    this.paymentsCount = 0;
+    this.maxPayments = maxPayments;
     this.isValid = true;
     this.isOwner = true;
-    this.EMPTY = b'501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836';
   }
-  public function pay(Sig signature, PubKey publicKey, int currentDate, bytes txIdPago, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
+  public function pay(Sig signature, PubKey publicKey, int realTimestamp, bytes txid, int qtyPago, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
+    require(publicKey == this.adminPubKey);
     require(checkSig(signature, publicKey));
     require(this.isValid);
-    this.updateArr(currentDate, txIdPago);
+    require(this.paymentsCount < this.maxPayments);
+    
+    int offset = this.paymentsCount * 56;
+    bytes scheduledDateBytes = this.paymentsLedger[offset : offset + 8];
+    bytes newRecord = scheduledDateBytes + num2bin(realTimestamp, 8) + txid + num2bin(qtyPago, 8);
+    this.paymentsLedger = this.paymentsLedger[0 : offset] + newRecord + this.paymentsLedger[offset + 56 : len(this.paymentsLedger)];
+    this.paymentsCount++;
+    if(this.paymentsCount == this.maxPayments) {
+        this.isValid = false;
+      }
     bytes outputs = this.buildStateOutput(this.__scrypt_ts_ctx_value);
     if(this.__scrypt_ts_change.amount > 0) {
         outputs += this.buildChangeOutput();
@@ -47,24 +51,12 @@ contract PaymentContract {
     
     require(this.__scrypt_ts_ctx_hashoutputs == hash256(outputs));
   }
-  function updateArr(int currentDate, bytes txid) : bool {
-    bool done = true;
-    loop (12) : i {
-        if(done == true && this.dataPayments[i].timestamp < currentDate && this.dataPayments[i].txid == this.EMPTY) {
-          this.dataPayments[i] = {currentDate, txid};
-          if(i == 12 - 1) {
-            this.isValid = false;
-          }
-          done = false;
-        }
-      }
-    return true;
-  }
   public function transferOwnership(Sig signature, PubKey publicKey, Ripemd160 oldOwner, Ripemd160 newOwner, Ripemd160 newAddressGN, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
+    require(publicKey == this.adminPubKey);
     require(checkSig(signature, publicKey));
     this.verifyId(oldOwner);
     require(this.isOwner);
@@ -75,7 +67,6 @@ contract PaymentContract {
     if(this.__scrypt_ts_change.amount > 0) {
         outputs += this.buildChangeOutput();
       }
-    
     require(this.__scrypt_ts_ctx_hashoutputs == hash256(outputs));
   }
   public function transferPartial(Sig signature, PubKey publicKey, Ripemd160 oldOwner, int newAmountGN, int newQtyTokens, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
@@ -83,6 +74,7 @@ contract PaymentContract {
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
+    require(publicKey == this.adminPubKey);
     require(checkSig(signature, publicKey));
     this.verifyId(oldOwner);
     require(this.isOwner);
@@ -93,7 +85,6 @@ contract PaymentContract {
     if(this.__scrypt_ts_change.amount > 0) {
         outputs += this.buildChangeOutput();
       }
-    
     require(this.__scrypt_ts_ctx_hashoutputs == hash256(outputs));
   }
   function verifyId(Ripemd160 owner) : bool {

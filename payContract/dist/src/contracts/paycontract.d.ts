@@ -1,25 +1,18 @@
-import { SmartContract, PubKey, Sig, Addr, ByteString, FixedArray } from 'scrypt-ts';
-export type Timestamp = bigint;
-export type TxId = ByteString;
-export type Payment = {
-    timestamp: Timestamp;
-    txid: TxId;
-};
-export declare const N = 12;
-export type Payments = FixedArray<Payment, typeof N>;
+import { SmartContract, PubKey, Sig, Addr, ByteString } from 'scrypt-ts';
 export declare class PaymentContract extends SmartContract {
     owner: Addr;
     readonly adminPubKey: PubKey;
     addressGN: Addr;
     amountGN: bigint;
     qtyTokens: bigint;
-    dataPayments: Payments;
+    paymentsLedger: ByteString;
+    paymentsCount: bigint;
+    readonly maxPayments: bigint;
     isValid: boolean;
     isOwner: boolean;
-    readonly EMPTY: TxId;
-    constructor(owner: Addr, adminPubKey: PubKey, addressGN: Addr, amountGN: bigint, qtyTokens: bigint, datas: FixedArray<Timestamp, typeof N>, txids: FixedArray<ByteString, typeof N>);
-    pay(signature: Sig, publicKey: PubKey, currentDate: bigint, txIdPago: ByteString): void;
-    updateArr(currentDate: Timestamp, txid: TxId): void;
+    constructor(owner: Addr, adminPubKey: PubKey, addressGN: Addr, amountGN: bigint, qtyTokens: bigint, maxPayments: bigint, initialLedger: ByteString);
+    pay(signature: Sig, publicKey: PubKey, realTimestamp: bigint, txid: ByteString, // Debe ser exactamente de 32 bytes
+    qtyPago: bigint): void;
     transferOwnership(signature: Sig, publicKey: PubKey, oldOwner: Addr, newOwner: Addr, newAddressGN: Addr): void;
     transferPartial(signature: Sig, publicKey: PubKey, oldOwner: Addr, newAmountGN: bigint, newQtyTokens: bigint): void;
     verifyId(owner: Addr): void;

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { PaymentContract, Timestamp, N } from './src/contracts/paycontract';
-import { bsv, PubKey, Addr, ByteString, FixedArray, toByteString, fill, UTXO } from 'scrypt-ts';
+import { PaymentContract } from './src/contracts/paycontract';
+import { bsv, PubKey, Addr, toByteString, UTXO } from 'scrypt-ts';
 import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
@@ -23,27 +23,28 @@ export type DeployParams = {
     purse: string;
 };
 
-
-export type PaymentStateItem = {
-    timestamp: string;  // BigInt serializado como string
-    txid: string;
-};
-
-// Tipo para el array completo
-export type PaymentState = PaymentStateItem[];//FixedArray<PaymentStateItem[], typeof N>;
-
 export type DeploymentResult = {
     contractId: string;
-    state: PaymentState;  // Tipo específico según tu contrato
+    state: string;  // Ahora el estado es simplemente un Hex String (El Ledger Binario)
     addressOwner: string;
     addressGN: string;
-    paymentQuarks: bigint;
+    paymentQuarks: string;
 };
 
 function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
     return utxos
 }
 
+
+function genDatas(n: number, l: number, fechaInicio: number): number[] {
+    // Verificar compatibilidad de tamaños
+    const fechas: number[] = [];
+    for (let i = 0; i < n; i++) {
+        fechas.push(fechaInicio + i * l);
+    }
+
+    return fechas;
+}
 
 
 export async function deployContract(params: DeployParams): Promise<DeploymentResult> {
@@ -107,26 +108,46 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
                 cacheTTL: 30000    
             });
 
+    const qtyTokens = BigInt(params.qtyT); 
+    const amountQuarks = BigInt(params.quarks); 
+    const maxPayments = BigInt(params.n);
+    const adminPubKey: PubKey = PubKey(adminPublicKey);
     // Generar datas usando la función auxiliar
-    const datas = await genDatas(params.n, params.lapse, params.startDate);
 
-    // Configurar valores iniciales
-    const emptyTxid = toByteString('501a9448665a70e3efe50adafc0341c033e2f22913cc0fb6b76cbcb5c54e7836');
-    const txids = fill(emptyTxid, params.n) as unknown as FixedArray<ByteString, typeof N>;
-
-    // Preparar claves y direcciones
-    const adminPubKey = PubKey(adminPublicKey);
     const ownerPubKey = bsv.PublicKey.fromHex(params.ownerPub);
     const ownerAddr = Addr(ownerPubKey.toAddress().toByteString());
+    const realAddOwner = bsv.Address.fromPublicKey(ownerPubKey).toString();
+    // Preparar claves y direcciones
+
     const gnPubKey = bsv.PublicKey.fromHex(params.ownerGN);
     const gnAddr = Addr(gnPubKey.toAddress().toByteString());
     const realAddGN = bsv.Address.fromPublicKey(gnPubKey).toString();
-    const realAddOwner = bsv.Address.fromPublicKey(ownerPubKey).toString();
-    
-    // 1. Carga el artefacto COMPILADO (sin ts-node)
-    // 1. Cargar artefacto usando ruta absoluta
+
+    // ----------------------------------------------------------------------
+    // 4. MAGIA DEL LEDGER BINARIO: Construcción del Arreglo Stringified
+    // ----------------------------------------------------------------------
+    const scheduledDates = genDatas(params.n, params.lapse, params.startDate);
+    const totalBuffer = Buffer.alloc(params.n * 56); // 56 bytes por slot
+
+    for (let i = 0; i < params.n; i++) {
+        const offset = i * 56;
+        // Escribir scheduledDate (8 bytes - Little Endian nativo de JS/sCrypt)
+        totalBuffer.writeBigInt64LE(BigInt(scheduledDates[i]), offset);
+        // Escribir realTimestamp inicial (8 bytes en 0)
+        totalBuffer.writeBigInt64LE(0n, offset + 8);
+        // Escribir txid vacío (32 bytes de ceros)
+        totalBuffer.fill(0, offset + 16, offset + 48);
+        // Escribir qtyPago inicial (8 bytes en 0)
+        totalBuffer.writeBigInt64LE(0n, offset + 48);
+    }
+
+    const initialLedger = toByteString(totalBuffer.toString('hex'));
+
+
+    // ----------------------------------------------------------------------
+    // 5. Carga de Artefacto e Instanciación
+    // ----------------------------------------------------------------------
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
-    
     if (!fs.existsSync(artifactPath)) {
         throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
     }
@@ -138,10 +159,10 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
             ownerAddr,
             adminPubKey,
             gnAddr,
-            BigInt(params.quarks),
-            BigInt(params.qtyT),
-            datas,
-            txids
+            amountQuarks, 
+            qtyTokens, 
+            maxPayments,
+            initialLedger
         );
 
   // 3. Conecta a la blockchain
@@ -156,40 +177,18 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
   /*await contract.deploy(1, {
         utxos: confirmedUtxos  
     });*/
-  
-  // Preparar resultado
-  const serializedState: PaymentState = contract.dataPayments.map(payment => ({
-    timestamp: payment.timestamp.toString(),  // Convertir BigInt a string
-    txid: payment.txid
-    }));
 
     return {
         contractId: deployTx.id,
-        state: serializedState,
-        addressOwner: realAddOwner, //ownerPubKey.toAddress().toString(), //bsv.Address.fromPublicKey(ownerPubKey).toString();
-        addressGN: realAddGN, //gnPubKey.toAddress().toString(), 
-        paymentQuarks: contract.amountGN
+        state: contract.paymentsLedger, // Retorna la cadena Hex completa del ledger
+        addressOwner: realAddOwner,
+        addressGN: realAddGN,
+        paymentQuarks: contract.amountGN.toString()
     };
     
 }
 
-async function genDatas(n: number, l: number, fechaInicio: number): Promise<FixedArray<Timestamp, typeof N>> {
-    // Verificar compatibilidad de tamaños
-    if (n !== N) {
-        throw new Error(
-            `Tamaño requerido (${n}) no coincide con tamaño de artefacto (${N}). Detenga el proceso.`
-        );
-    }
-    
-    const fechas = fill(0n, N) as FixedArray<bigint, typeof N>;  
-    
-    for (let i = 0; i < N; i++) {  
-        const fecha = BigInt(fechaInicio + i * l);
-        fechas[i] = fecha;
-    }
 
-    return fechas;
-}
 
 
 

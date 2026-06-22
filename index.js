@@ -47,6 +47,9 @@ app.post('/pay', async (req, res) => {
 
   try {
     await mutex.runExclusive(async () => {
+      // MODIFICADO: AUNQUE EL FRONTEND ENVÍE 'datas' Y 'txids', EL NUEVO PAYSCRIPT 
+      // BASADO EN EL LEDGER BINARIO SEGURAMENTE LOS IGNORARÁ, PUES LEE TODO ON-CHAIN.
+      // SE MANTIENE LA FIRMA ORIGINAL PARA EVITAR ERRORES DE RUTEO.
       const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse);
       if (result && typeof result === 'object' && result.lastStateTxid) {
         res.status(200).json({

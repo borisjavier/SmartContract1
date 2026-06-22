@@ -1,20 +1,16 @@
 export type PayParams = {
     txId: string;
     atOutputIndex: number;
-    datas: string[];
-    txids: string[];
+    datas?: string[];
+    txids?: string[];
     txidPago: string;
     qtyTokens: number;
     ownerPubKey: string;
     purse: string;
 };
-export type PaymentItem = {
-    timestamp: string;
-    txid: string;
-};
 export type PayResult = {
     lastStateTxid: string;
-    state: PaymentItem[];
+    state: string;
     addressGN: string;
     amountGN: string;
     isValid: boolean;
