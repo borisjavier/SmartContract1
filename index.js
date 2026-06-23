@@ -17,10 +17,11 @@ app.use(express.json());
 // Endpoint para generar un contrato
 app.post('/gen-contract', async (req, res) => {
   const { size, tokens, lapso, start, pubOwner, pubGN, quarks, purse } = req.body;
-  
+  const quarksBigInt = BigInt(quarks);
   try {
     await mutex.runExclusive(async () => {
-      const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarks, purse);
+      const result = await runContract(size, tokens, lapso, start, pubOwner, pubGN, quarksBigInt, purse);
+      
       if (result && typeof result === 'object' && result.contractId) {
         res.status(200).json({
           message: 'Contrato generado exitosamente',
@@ -43,14 +44,14 @@ app.post('/gen-contract', async (req, res) => {
 
 // Endpoint para desplegar un contrato maravilla
 app.post('/pay', async (req, res) => {
-  const { size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse } = req.body;
+  const { size, lastStateTxid, txidPago, qtyT, ownerPubKey, purse } = req.body;
 
   try {
     await mutex.runExclusive(async () => {
       // MODIFICADO: AUNQUE EL FRONTEND ENVÍE 'datas' Y 'txids', EL NUEVO PAYSCRIPT 
       // BASADO EN EL LEDGER BINARIO SEGURAMENTE LOS IGNORARÁ, PUES LEE TODO ON-CHAIN.
       // SE MANTIENE LA FIRMA ORIGINAL PARA EVITAR ERRORES DE RUTEO.
-      const result = await payScript(size, lastStateTxid, datas, txids, txidPago, qtyT, ownerPubKey, purse);
+      const result = await payScript(size, lastStateTxid, txidPago, qtyT, ownerPubKey, purse);
       if (result && typeof result === 'object' && result.lastStateTxid) {
         res.status(200).json({
           message: 'Se ha efectuado un pago en el contrato.',

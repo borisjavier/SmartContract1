@@ -13,8 +13,6 @@ dotenv.config({ path: envPath })
 export type PayParams = {
     txId: string;
     atOutputIndex: number;
-    datas?: string[]; // Ignorado por la nueva lógica binaria
-    txids?: string[]; // Ignorado por la nueva lógica binaria
     txidPago: string;
     qtyTokens: number;
     ownerPubKey: string;

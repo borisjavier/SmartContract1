@@ -1,8 +1,6 @@
 export type PayParams = {
     txId: string;
     atOutputIndex: number;
-    datas?: string[];
-    txids?: string[];
     txidPago: string;
     qtyTokens: number;
     ownerPubKey: string;
