@@ -44,7 +44,7 @@ app.post('/gen-contract', async (req, res) => {
 
 // Endpoint para desplegar un contrato maravilla
 app.post('/pay', async (req, res) => {
-  const { size, lastStateTxid, txidPago, qtyT, ownerPubKey, purse } = req.body;
+  const { size, lastStateTxid, txidPago, qtyPago, ownerPubKey, purse } = req.body;
 
   try {
     await mutex.runExclusive(async () => {
