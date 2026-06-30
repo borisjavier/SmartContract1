@@ -1,4 +1,4 @@
-import { PaymentContract } from './src/contracts/paycontract'; // O paycontracto1, asegúrate del nombre
+import { PaymentContract } from './src/contracts/paycontract'; 
 import * as path from 'path';
 import * as fs from 'fs';
 import { bsv, PubKey, Addr, toByteString, findSig, MethodCallOptions, UTXO } from 'scrypt-ts';
@@ -8,20 +8,27 @@ import * as dotenv from 'dotenv';
 import { withRetries } from './retries';
 
 const envPath = path.resolve(__dirname, '../.env');
-dotenv.config({ path: envPath })
+dotenv.config({ path: envPath });
 
 export type PayParams = {
     txId: string;
     atOutputIndex: number;
     txidPago: string;
-    qtyTokens: number;
+    qtyPago: number; // Monto pagado
     ownerPubKey: string;
     purse: string;
 };
 
+export type PaymentItem = {
+    scheduledDate: string;
+    realTimestamp: string;
+    txid: string;
+    qtyPago: string;
+};
+
 export type PayResult = {
     lastStateTxid: string;
-    state: string; // Ahora retornamos el String Hexadecimal completo
+    state: string; // Retorna el String Hexadecimal completo
     addressGN: string;
     amountGN: string;
     isValid: boolean;
@@ -32,18 +39,11 @@ function getConfirmedUtxos(utxos: UTXO[]): UTXO[] {
 }
 
 export async function pay(params: PayParams): Promise<PayResult> {
-    if (!process.env.WOC_API_KEY) {
-        throw new Error("WOC_API_KEY environment variable is not set");
-    }
+    if (!process.env.WOC_API_KEY) throw new Error("WOC_API_KEY environment variable is not set");
+    if (!process.env.PRIVATE_KEY) throw new Error("Private key is required in .env");
+    if (!params.ownerPubKey) throw new Error("Owner public key is required");
 
     const privateKey = bsv.PrivateKey.fromWIF(params.purse || '');
-    if (!process.env.PRIVATE_KEY) {
-        throw new Error("Private key is required in .env");
-    }
-
-    if (!params.ownerPubKey) {
-        throw new Error("Owner public key is required");
-    }
     const woc_api_key = process.env.WOC_API_KEY;
 
     const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
@@ -66,9 +66,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
 
     const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json');
         
-    if (!fs.existsSync(artifactPath)) {
-        throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
-    }
+    if (!fs.existsSync(artifactPath)) throw new Error(`Artefacto no encontrado en: ${artifactPath}`);
 
     const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
     await PaymentContract.loadArtifact(artifact);
@@ -79,41 +77,26 @@ export async function pay(params: PayParams): Promise<PayResult> {
     
     // 2. Constantes del nuevo pago
     const currentDate = BigInt(Math.floor(Date.now() / 1000));
-    const txIdPagoHex = params.txidPago; // 64 caracteres hexadecimales
-    const qtyPago = BigInt(params.qtyTokens);
+    const txIdPagoHex = params.txidPago; 
+    const qtyPagoBigInt = BigInt(params.qtyPago); // Unificado usando qtyPago
 
     await instance.connect(signer);
     const nextInstance = instance.next();
 
-    // ----------------------------------------------------------------------
     // 3. MAGIA OFF-CHAIN: Manipulación directa del Buffer Binario
-    // ----------------------------------------------------------------------
     const currentIndex = Number(instance.paymentsCount);
     const max = Number(instance.maxPayments);
 
-    if (currentIndex >= max) {
-        throw new Error("El contrato ya ha registrado el número máximo de pagos.");
-    }
+    if (currentIndex >= max) throw new Error("El contrato ya ha registrado el número máximo de pagos.");
 
-    // Cargamos el ledger actual en un Buffer de Node.js
     const ledgerBuffer = Buffer.from(instance.paymentsLedger, 'hex');
-    const offset = currentIndex * 56; // Salto directo O(1) al bloque que toca editar
+    const offset = currentIndex * 56; 
 
-    // Escribimos los nuevos datos respetando la estructura de 56 bytes:
-    // [0-8 bytes] scheduledDate (No se toca)
-    // [8-16 bytes] realTimestamp (Escribimos currentDate en Little Endian)
     ledgerBuffer.writeBigInt64LE(currentDate, offset + 8);
-    
-    // [16-48 bytes] txid (Escribimos el txid en hexadecimal)
     ledgerBuffer.write(txIdPagoHex, offset + 16, 32, 'hex');
-    
-    // [48-56 bytes] qtyPago (Escribimos los tokens en Little Endian)
-    ledgerBuffer.writeBigInt64LE(qtyPago, offset + 48);
+    ledgerBuffer.writeBigInt64LE(qtyPagoBigInt, offset + 48);
 
-    // Asignamos el buffer modificado a la próxima instancia
     nextInstance.paymentsLedger = toByteString(ledgerBuffer.toString('hex'));
-    
-    // Actualizamos el contador y la validez
     nextInstance.paymentsCount = instance.paymentsCount + 1n;
     if (nextInstance.paymentsCount === instance.maxPayments) {
         nextInstance.isValid = false;
@@ -131,7 +114,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
                 pubKey,
                 currentDate,
                 toByteString(txIdPagoHex),
-                // PRECAUCIÓN: Revisa si qtyPago debe pasar a la llamada aquí
+                qtyPagoBigInt,
                 {
                     next: {
                         instance: nextInstance,
@@ -156,5 +139,48 @@ export async function pay(params: PayParams): Promise<PayResult> {
     } catch (error) {
         console.error('Contract call failed:', error);
         throw new Error(`Error during contract call: ${error.message}`);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// LECTURA DEL ESTADO DEL CONTRATO
+// -----------------------------------------------------------------------------
+export async function getContractState(txId: string, atOutputIndex: number = 0): Promise<PaymentItem[]> {
+    if (!process.env.WOC_API_KEY) throw new Error("WOC_API_KEY no configurado");
+    
+    // Instanciar solo el proveedor (modo lectura, no necesitamos el GNWallet ni PrivateKey)
+    const provider = new GNProvider(bsv.Networks.mainnet, process.env.WOC_API_KEY, '', { 
+        bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
+    });
+
+    const artifactPath = path.resolve(__dirname, '../artifacts/paycontract.json'); // Ruta ajustada a Cloud Run
+    if (!fs.existsSync(artifactPath)) throw new Error(`Artefacto no encontrado: ${artifactPath}`);
+    
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    await PaymentContract.loadArtifact(artifact);
+
+    try {
+        const txResponse = await provider.getTransaction(txId);
+        const instance = PaymentContract.fromTx(txResponse, atOutputIndex);
+
+        const parsedState: PaymentItem[] = [];
+        const ledgerBuffer = Buffer.from(instance.paymentsLedger, 'hex');
+        const slotSize = 56;
+        
+        const max = Number(instance.maxPayments);
+
+        for (let i = 0; i < max; i++) {
+            const off = i * slotSize;
+            parsedState.push({
+                scheduledDate: ledgerBuffer.readBigInt64LE(off).toString(),
+                realTimestamp: ledgerBuffer.readBigInt64LE(off + 8).toString(),
+                txid: ledgerBuffer.subarray(off + 16, off + 48).toString('hex'),
+                qtyPago: ledgerBuffer.readBigInt64LE(off + 48).toString()
+            });
+        }
+        
+        return parsedState;
+    } catch (error) {
+        throw new Error(`Error al leer el estado del contrato: ${error.message}`);
     }
 }

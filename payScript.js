@@ -4,15 +4,15 @@ const path = require('path');
 const contractDir = path.resolve(__dirname, './payContract');
 let payScriptFromModule = null;
 
-async function createAndPay(lastStateTxid, txidPago, qtyT, ownerPubKey, purse, payScriptFunction) {
+async function createAndPay(lastStateTxid, txidPago, qtyPago, ownerPubKey, purse, payScriptFunction) {
     try {
         // Mapeamos a BigInt en caso de que la función de TS los siga requiriendo en la firma,
         // aunque internamente el contrato lea desde la blockchain.
 
-        const safeQtyTokens = qtyT !== undefined ? qtyT : 0;
+        const safeQtyPago = qtyPago !== undefined ? qtyPago : 0;
 
-        if(safeQtyTokens === 0) {
-            console.warn('qtyT es indefinido o cero en este punto.');
+        if(safeQtyPago === 0) {
+            console.warn('qtyPago es indefinido o cero en este punto.');
         }
         //if(qtyT === 0) {console.warn('qty es indefinido en este punto.')}
 
@@ -20,7 +20,7 @@ async function createAndPay(lastStateTxid, txidPago, qtyT, ownerPubKey, purse, p
             txId: lastStateTxid,
             atOutputIndex: 0,
             txidPago,
-            qtyTokens: safeQtyTokens,
+            qtyPago: safeQtyPago,
             ownerPubKey,
             purse: purse
         };
@@ -38,7 +38,7 @@ async function createAndPay(lastStateTxid, txidPago, qtyT, ownerPubKey, purse, p
 }
 
     
-    async function runPay(size, lastStateTxid, txidPago, qtyT, ownerPubKey, purse) {
+    async function runPay(size, lastStateTxid, txidPago, qtyPago, ownerPubKey, purse) {
         try {
             // 1. PATRÓN SINGLETON PARA LA CACHÉ EN MEMORIA
             if (!payScriptFromModule) {
@@ -58,7 +58,7 @@ async function createAndPay(lastStateTxid, txidPago, qtyT, ownerPubKey, purse, p
             // 2. EJECUTAR PAGO
             console.log('Llamando payScriptModule...');
             const result = await createAndPay(
-                lastStateTxid, txidPago, qtyT, ownerPubKey, purse, payScriptFromModule
+                lastStateTxid, txidPago, qtyPago, ownerPubKey, purse, payScriptFromModule
             );
 
             // 3. VALIDAR Y RETORNAR

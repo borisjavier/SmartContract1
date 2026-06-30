@@ -51,7 +51,7 @@ app.post('/pay', async (req, res) => {
       // MODIFICADO: AUNQUE EL FRONTEND ENVÍE 'datas' Y 'txids', EL NUEVO PAYSCRIPT 
       // BASADO EN EL LEDGER BINARIO SEGURAMENTE LOS IGNORARÁ, PUES LEE TODO ON-CHAIN.
       // SE MANTIENE LA FIRMA ORIGINAL PARA EVITAR ERRORES DE RUTEO.
-      const result = await payScript(size, lastStateTxid, txidPago, qtyT, ownerPubKey, purse);
+      const result = await payScript(size, lastStateTxid, txidPago, qtyPago, ownerPubKey, purse);
       if (result && typeof result === 'object' && result.lastStateTxid) {
         res.status(200).json({
           message: 'Se ha efectuado un pago en el contrato.',
