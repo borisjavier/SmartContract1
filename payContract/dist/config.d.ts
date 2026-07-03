@@ -1,1 +1,0 @@
-export declare const adminPublicKey = "02ddff9b585c85136ec6ccf6fde02afccaeb3ea97c81ba3b439740b25cf77245d9";
