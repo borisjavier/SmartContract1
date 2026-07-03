@@ -28,7 +28,6 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const paycontract_1 = require("./src/contracts/paycontract");
 const scrypt_ts_1 = require("scrypt-ts");
-const config_1 = require("./config");
 const dotenv = __importStar(require("dotenv"));
 const gn_provider_1 = require("scrypt-ts/dist/providers/gn-provider");
 const gn_wallet_1 = require("gn-wallet");
@@ -55,15 +54,13 @@ async function deployContract(params) {
     if (!privateKey) {
         throw new Error("Private key is required");
     }
+    const pubKey = (0, scrypt_ts_1.PubKey)(privateKey.publicKey.toHex());
     const woc_api_key = process.env.WOC_API_KEY;
     // Configurar provider y signer
     //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
     const provider = new gn_provider_1.GNProvider(scrypt_ts_1.bsv.Networks.mainnet, woc_api_key, '', {
         bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app'
     });
-    if (!config_1.adminPublicKey) {
-        throw new Error("Admin public key is required");
-    }
     const validatePubKey = (key, name) => {
         if (typeof key !== 'string') {
             throw new Error(`${name} debe ser un string`);
@@ -78,7 +75,7 @@ async function deployContract(params) {
             throw new Error(`${name} contiene caracteres no hexadecimales`);
         }
     };
-    validatePubKey(config_1.adminPublicKey, 'adminPublicKey');
+    validatePubKey(pubKey, 'adminPublicKey');
     validatePubKey(params.ownerPub, 'ownerPub');
     validatePubKey(params.ownerGN, 'ownerGN');
     const address = privateKey.toAddress();
@@ -95,7 +92,7 @@ async function deployContract(params) {
     const qtyTokens = BigInt(params.qtyT);
     const amountQuarks = BigInt(params.quarks);
     const maxPayments = BigInt(params.n);
-    const adminPubKey = (0, scrypt_ts_1.PubKey)(config_1.adminPublicKey);
+    const adminPubKey = pubKey;
     // Generar datas usando la función auxiliar
     const ownerPubKey = scrypt_ts_1.bsv.PublicKey.fromHex(params.ownerPub);
     const ownerAddr = (0, scrypt_ts_1.Addr)(ownerPubKey.toAddress().toByteString());

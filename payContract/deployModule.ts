@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { PaymentContract } from './src/contracts/paycontract';
 import { bsv, PubKey, Addr, toByteString, UTXO } from 'scrypt-ts';
-import { adminPublicKey } from './config';
 import * as dotenv from 'dotenv';
 import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
 import { GNWallet } from 'gn-wallet';
@@ -58,16 +57,14 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
         throw new Error("Private key is required");
     } 
 
+    const pubKey = PubKey(privateKey.publicKey.toHex());
+
     const woc_api_key = process.env.WOC_API_KEY;
     // Configurar provider y signer
     //const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key);
     const provider = new GNProvider(bsv.Networks.mainnet, woc_api_key, '', { 
         bridgeUrl: 'https://goldennotes-api-1002383099812.us-central1.run.app' 
     });
-    
-    if (!adminPublicKey) {
-        throw new Error("Admin public key is required");
-    } 
 
     const validatePubKey = (key: string, name: string) => {
     if (typeof key !== 'string') {
@@ -88,7 +85,7 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
 };
 
 
-    validatePubKey(adminPublicKey, 'adminPublicKey');
+    validatePubKey(pubKey, 'adminPublicKey');
     validatePubKey(params.ownerPub, 'ownerPub');
     validatePubKey(params.ownerGN, 'ownerGN');
     
@@ -111,7 +108,7 @@ export async function deployContract(params: DeployParams): Promise<DeploymentRe
     const qtyTokens = BigInt(params.qtyT); 
     const amountQuarks = BigInt(params.quarks); 
     const maxPayments = BigInt(params.n);
-    const adminPubKey: PubKey = PubKey(adminPublicKey);
+    const adminPubKey: PubKey = pubKey;
     // Generar datas usando la función auxiliar
 
     const ownerPubKey = bsv.PublicKey.fromHex(params.ownerPub);
