@@ -85,7 +85,7 @@ async function deployContract(params) {
         throw new Error("No hay UTXOs confirmados disponibles para el despliegue");
     }
     const signer = new gn_wallet_1.GNWallet(privateKey, provider, {
-        targetUtxos: 50,
+        targetUtxos: 1,
         dustLimit: 546,
         cacheTTL: 30000
     });

@@ -59,7 +59,7 @@ export async function pay(params: PayParams): Promise<PayResult> {
     }
 
     const signer = new GNWallet(privateKey, provider, {
-        targetUtxos: 50,   
+        targetUtxos: 1,   
         dustLimit: 546,    
         cacheTTL: 30000    
     });
