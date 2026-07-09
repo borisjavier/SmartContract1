@@ -1,14 +1,7 @@
 import { Escrowcontract, SIGS } from './src/contracts/escrowcontract'
-import {
-    bsv,
-    Addr,
-    FixedArray,
-    hash160,
-    PubKey,
-    UTXO,
-} from 'scrypt-ts'
+import { bsv, Addr, FixedArray, hash160, PubKey, UTXO } from 'scrypt-ts'
 
-import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider';
+import { GNProvider } from 'scrypt-ts/dist/providers/gn-provider'
 import { GNWallet } from 'gn-wallet'
 
 import * as dotenv from 'dotenv'

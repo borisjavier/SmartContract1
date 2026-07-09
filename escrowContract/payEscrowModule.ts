@@ -113,7 +113,7 @@ export async function payEscrowContract(
                     targetUtxos: 1,
                     dustLimit: 546,
                     cacheTTL: 30000,
-                }) 
+                })
 
                 await instance.connect(signer)
 
